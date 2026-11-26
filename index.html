@@ -4,11 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#2563EB" />
-  <meta name="description" content="RzAbsensi Guru - Sistem Informasi Absensi Guru Berbasis QR Code & Jadwal Mengajar" />
-  <title>RzAbsensi Guru — Sistem Informasi Absensi Guru</title>
+  <meta name="description" content="HadirGuru - Sistem Informasi Absensi Guru Berbasis QR Code & Jadwal Mengajar" />
+  <title>HadirGuru — Sistem Informasi Absensi Guru</title>
 
   <!-- PWA Manifest via Data URI (Single-File PWA Mandate) -->
-  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22RzAbsensi%20Guru%22%2C%22short_name%22%3A%22RzAbsensi%22%2C%22description%22%3A%22Sistem%20Informasi%20Absensi%20Guru%20Berbasis%20QR%20Code%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F8FAFC%22%2C%22theme_color%22%3A%22%232563EB%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%253E%253Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27120%27%20fill%3D%27%232563EB%27%2F%253E%253Cpath%20d%3D%27M160%20264l64%2064%20128-144%27%20stroke%3D%27white%27%20stroke-width%3D%2744%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22HadirGuru%22%2C%22short_name%22%3A%22HadirGuru%22%2C%22description%22%3A%22Sistem%20Informasi%20Absensi%20Guru%20Berbasis%20QR%20Code%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F8FAFC%22%2C%22theme_color%22%3A%22%232563EB%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%253E%253Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27120%27%20fill%3D%27%232563EB%27%2F%253E%253Cpath%20d%3D%27M160%20264l64%2064%20128-144%27%20stroke%3D%27white%27%20stroke-width%3D%2744%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
 
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -908,7 +908,7 @@
         <div class="w-12 h-12 rounded-2xl bg-[#2563EB] flex items-center justify-center text-white shadow-clay animate-pulse">
           <i data-lucide="qr-code" class="w-6 h-6"></i>
         </div>
-        <p class="text-sm font-semibold text-[#475569]">Memuat RzAbsensi Guru...</p>
+        <p class="text-sm font-semibold text-[#475569]">Memuat HadirGuru...</p>
       </div>
     </div>
   </div>
@@ -982,7 +982,7 @@
       if (!('serviceWorker' in navigator)) return;
       try {
         const swCode = `
-          const CACHE_NAME = 'rzabsensi-guru-v1';
+          const CACHE_NAME = 'hadirguru-v2';
           self.addEventListener('install', (e) => {
             self.skipWaiting();
           });
@@ -1842,7 +1842,7 @@
           aksi: 'AUTO_SETUP_DATABASE',
           entitas: 'system',
           target_id: 'global_config',
-          detail_perubahan: 'Inisialisasi database RzAbsensi Guru (Multi-Peran: KBM, Piket, Tahfidz, Sorogan, OSIS, Ekskul, Jumat)',
+          detail_perubahan: 'Inisialisasi database HadirGuru (Multi-Peran: KBM, Piket, Tahfidz, Sorogan, OSIS, Ekskul, Jumat)',
           alasan: 'Setup pertama kali aplikasi',
           device_info: getDeviceSummary()
         }
@@ -2847,7 +2847,7 @@
             <div class="flex items-center gap-3">
               ${cfg.logo_url
                 ? `<img src="${escapeHtml(cfg.logo_url)}" alt="Logo" class="w-11 h-11 rounded-2xl object-cover bg-white shadow-sm p-1" />`
-                : `<div class="w-11 h-11 rounded-2xl clay-icon-lavender flex items-center justify-center text-white font-extrabold text-lg">Rz</div>`
+                : `<div class="w-11 h-11 rounded-2xl clay-icon-lavender flex items-center justify-center text-white font-extrabold text-lg">HG</div>`
               }
               <div>
                 <p class="text-xs font-bold uppercase tracking-wider text-[#2563EB]">Presensi Guru</p>
@@ -3355,7 +3355,7 @@
               <div class="flex items-center gap-3">
                 ${cfg.logo_url
                   ? `<img src="${escapeHtml(cfg.logo_url)}" alt="Logo" class="w-11 h-11 rounded-2xl object-cover bg-white border border-[#E2E8F0] shadow-sm p-1" />`
-                  : `<div class="w-11 h-11 rounded-2xl clay-icon-lavender flex items-center justify-center text-white font-extrabold text-lg">Rz</div>`
+                  : `<div class="w-11 h-11 rounded-2xl clay-icon-lavender flex items-center justify-center text-white font-extrabold text-lg">HG</div>`
                 }
                 <div>
                   <h1 class="text-lg font-extrabold text-[#0F172A]">Login Administrator</h1>
@@ -3772,17 +3772,17 @@
                 <div class="flex flex-col items-center justify-center w-full pb-3 mb-3 border-b border-[#E2E8F0]">
                   ${cfg.logo_url
                     ? `<img src="${escapeHtml(cfg.logo_url)}" alt="Logo" class="w-10 h-10 rounded-2xl object-cover bg-white border border-[#E2E8F0] shadow-sm p-0.5" />`
-                    : `<div class="w-10 h-10 rounded-2xl bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base shadow-sm">Rz</div>`
+                    : `<div class="w-10 h-10 rounded-2xl bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base shadow-sm">HG</div>`
                   }
                 </div>
               ` : `
                 <div class="flex items-center gap-3 px-2 py-2 mb-4">
                   ${cfg.logo_url
                     ? `<img src="${escapeHtml(cfg.logo_url)}" alt="Logo" class="w-10 h-10 rounded-2xl object-cover bg-white border border-[#E2E8F0] shrink-0 shadow-sm p-0.5" />`
-                    : `<div class="w-10 h-10 rounded-2xl bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base shrink-0 shadow-sm">Rz</div>`
+                    : `<div class="w-10 h-10 rounded-2xl bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base shrink-0 shadow-sm">HG</div>`
                   }
                   <div class="overflow-hidden min-w-0">
-                    <h1 class="text-base font-extrabold text-[#0F172A] truncate">RzAbsensi</h1>
+                    <h1 class="text-base font-extrabold text-[#0F172A] truncate">HadirGuru</h1>
                     <p class="text-[11px] font-medium text-[#64748B] truncate" title="${escapeHtml(cfg.nama_instansi || 'Panel Administrasi')}">${escapeHtml(cfg.nama_instansi || 'Panel Administrasi')}</p>
                   </div>
                 </div>
@@ -3845,7 +3845,7 @@
               <div class="flex flex-nowrap items-center gap-2 sm:gap-3 flex-1 min-w-0 mr-1 sm:mr-3">
                 ${cfg.logo_url
                   ? `<img src="${escapeHtml(cfg.logo_url)}" alt="Logo" class="lg:hidden w-8 h-8 rounded-xl object-cover bg-white border border-[#E2E8F0] shadow-sm p-0.5 shrink-0" />`
-                  : `<div class="lg:hidden w-8 h-8 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-xs shrink-0 shadow-sm">Rz</div>`
+                  : `<div class="lg:hidden w-8 h-8 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-xs shrink-0 shadow-sm">HG</div>`
                 }
                 <div class="relative flex-1 min-w-0 max-w-md">
                   <i data-lucide="search" class="w-3.5 h-3.5 text-[#94A3B8] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
@@ -5489,7 +5489,7 @@
       });
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Data Guru');
-      XLSX.writeFile(wb, `Data_Guru_RzAbsensi_${getJakartaNow().dateStr}.xlsx`);
+      XLSX.writeFile(wb, `Data_Guru_HadirGuru_${getJakartaNow().dateStr}.xlsx`);
       showToast('Data guru berhasil diekspor ke Excel.', 'success');
     }
 
@@ -9199,7 +9199,7 @@
                     <div id="set-logo-preview" class="w-14 h-14 rounded-2xl bg-white border border-[#E2E8F0] flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
                       ${cfg.logo_url
                         ? `<img src="${escapeHtml(cfg.logo_url)}" alt="Preview Logo" class="w-full h-full object-cover p-1" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full bg-rose-50 text-rose-500 flex items-center justify-center text-[10px] font-bold text-center p-1\\'>Gagal Memuat</div>';" />`
-                        : `<div class="w-full h-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base">Rz</div>`
+                        : `<div class="w-full h-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base">HG</div>`
                       }
                     </div>
                     <div class="sm:hidden text-xs text-[#64748B] font-semibold">Pratinjau Logo</div>
@@ -9400,7 +9400,7 @@
           logoPreview.innerHTML = `<img src="${escapeHtml(src)}" alt="Preview Logo" class="w-full h-full object-cover p-1" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\\'w-full h-full bg-rose-50 text-rose-500 flex items-center justify-center text-[10px] font-bold text-center p-1\\'>Gagal Memuat</div>';" />`;
           if (btnClearLogo) btnClearLogo.classList.remove('hidden');
         } else {
-          logoPreview.innerHTML = `<div class="w-full h-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base">Rz</div>`;
+          logoPreview.innerHTML = `<div class="w-full h-full bg-[#2563EB] flex items-center justify-center text-white font-extrabold text-base">HG</div>`;
           if (btnClearLogo) btnClearLogo.classList.add('hidden');
         }
       }
