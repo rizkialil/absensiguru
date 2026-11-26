@@ -895,8 +895,7 @@
       getAuth,
       signInWithEmailAndPassword,
       signOut,
-      onAuthStateChanged,
-      getIdTokenResult
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
     import {
       getFirestore,
@@ -1633,10 +1632,10 @@
       return 'Kepala Sekolah';
     }
 
-    async function verifyFirebaseAdminClaim(user) {
+    async function verifyFirebaseAdminRole(user) {
       if (!user) return false;
-      const tokenResult = await getIdTokenResult(user, true);
-      return tokenResult.claims?.admin === true;
+      const roleDoc = await dbAdapter.getDocument('users', user.uid);
+      return roleDoc?.role === 'admin';
     }
 
     async function autoSetupDatabase(isPreviewMode) {
@@ -3366,7 +3365,7 @@
             }
           } else {
             const cred = await signInWithEmailAndPassword(fbAuth, email, password);
-            const isAdmin = await verifyFirebaseAdminClaim(cred.user);
+            const isAdmin = await verifyFirebaseAdminRole(cred.user);
             if (!isAdmin) {
               await signOut(fbAuth);
               throw new Error('Akun berhasil login, tetapi belum memiliki hak Administrator. Hubungi pengelola sistem.');
@@ -9434,7 +9433,7 @@
           onAuthStateChanged(fbAuth, async (user) => {
             if (user) {
               try {
-                const isAdmin = await verifyFirebaseAdminClaim(user);
+                const isAdmin = await verifyFirebaseAdminRole(user);
                 if (!isAdmin) {
                   state.adminUser = null;
                   await signOut(fbAuth);
