@@ -7,8 +7,8 @@
   <meta name="description" content="HadirGuru - Sistem Informasi Absensi Guru Berbasis QR Code & Jadwal Mengajar" />
   <title>HadirGuru — Sistem Informasi Absensi Guru</title>
 
-  <!-- PWA Manifest via Data URI (Single-File PWA Mandate) -->
-  <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22HadirGuru%22%2C%22short_name%22%3A%22HadirGuru%22%2C%22description%22%3A%22Sistem%20Informasi%20Absensi%20Guru%20Berbasis%20QR%20Code%22%2C%22start_url%22%3A%22.%2F%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23F8FAFC%22%2C%22theme_color%22%3A%22%232563EB%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%20512%20512%27%253E%253Crect%20width%3D%27512%27%20height%3D%27512%27%20rx%3D%27120%27%20fill%3D%27%232563EB%27%2F%253E%253Cpath%20d%3D%27M160%20264l64%2064%20128-144%27%20stroke%3D%27white%27%20stroke-width%3D%2744%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%2F%253E%253C%2Fsvg%253E%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D" />
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="./manifest.webmanifest" />
 
   <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -976,29 +976,12 @@
     }
 
     // =========================================================================
-    // 2. SERVICE WORKER DINAMIS (PWA 1 FILE)
+    // 2. SERVICE WORKER PWA
     // =========================================================================
     function registerDynamicServiceWorker() {
       if (!('serviceWorker' in navigator)) return;
       try {
-        const swCode = `
-          const CACHE_NAME = 'hadirguru-v2';
-          self.addEventListener('install', (e) => {
-            self.skipWaiting();
-          });
-          self.addEventListener('activate', (e) => {
-            e.waitUntil(clients.claim());
-          });
-          self.addEventListener('fetch', (e) => {
-            if (e.request.method !== 'GET') return;
-            e.respondWith(
-              fetch(e.request).catch(() => caches.match(e.request))
-            );
-          });
-        `;
-        const blob = new Blob([swCode], { type: 'application/javascript' });
-        const swUrl = URL.createObjectURL(blob);
-        navigator.serviceWorker.register(swUrl).catch(() => {});
+        navigator.serviceWorker.register('./sw.js', { scope: './' }).catch(() => {});
       } catch (err) {
         // Abaikan pada environment sandbox tanpa HTTPS origin
       }
@@ -2939,8 +2922,7 @@
       if (state.publicMode === 'idle') {
         container.innerHTML = `
           <div class="text-center mb-6">
-            <h2 class="text-xl sm:text-2xl font-bold text-[#0F172A]">Presensi Guru</h2>
-            <p class="text-xs text-[#94A3B8] mt-1">Pilih metode absensi di bawah ini</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-[#0F172A]">Pilih Metode Absensi</h2>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -9253,13 +9235,13 @@
                 </div>
               </div>
 
-              <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+              <div class="flex flex-col sm:flex-row sm:items-start gap-3">
                 <div class="flex-1">
                   <label class="block text-xs font-bold text-[#475569] mb-1">Radius Absensi (Meter)</label>
                   <input id="set-geofence-radius" type="number" min="10" max="500" step="1" value="${escapeHtml(cfg.geofence_radius_meters ?? 100)}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
                   <p class="text-[10px] text-[#94A3B8] mt-1">Disarankan mulai dari 50–100 meter, lalu uji di dalam kantor.</p>
                 </div>
-                <button type="button" id="btn-use-current-geofence-location" class="px-4 py-2.5 rounded-xl bg-[#E0F2FE] hover:bg-[#0284C7] hover:text-white text-[#0369A1] text-xs font-bold transition whitespace-nowrap">
+                <button type="button" id="btn-use-current-geofence-location" class="sm:mt-5 px-4 py-2.5 rounded-xl bg-[#E0F2FE] hover:bg-[#0284C7] hover:text-white text-[#0369A1] text-xs font-bold transition whitespace-nowrap">
                   Gunakan Lokasi Saat Ini
                 </button>
               </div>
