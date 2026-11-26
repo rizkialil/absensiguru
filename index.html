@@ -161,6 +161,19 @@
       0%, 100% { top: 12%; opacity: 0.85; }
       50% { top: 86%; opacity: 0.85; }
     }
+
+    @keyframes loginSpinner {
+      to { transform: rotate(360deg); }
+    }
+
+    .login-spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid currentColor;
+      border-right-color: transparent;
+      border-radius: 9999px;
+      animation: loginSpinner 0.72s linear infinite;
+    }
     .scanner-beam {
       position: absolute;
       left: 8%;
@@ -3294,10 +3307,15 @@
               </div>
               <div>
                 <label class="block text-xs font-bold text-[#475569] mb-1.5">Kata Sandi</label>
-                <input id="login-password" type="password" required placeholder="••••••••" class="w-full px-4 py-3 rounded-2xl bg-[#F8FAFC] border border-transparent focus:border-[#2563EB] focus:bg-white text-sm font-medium focus:outline-none transition" />
+                <div class="relative">
+                  <input id="login-password" type="password" required placeholder="••••••••" class="w-full pl-4 pr-12 py-3 rounded-2xl bg-[#F8FAFC] border border-transparent focus:border-[#2563EB] focus:bg-white text-sm font-medium focus:outline-none transition" />
+                  <button type="button" id="btn-toggle-password" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi" class="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-[#94A3B8] hover:text-[#2563EB] focus:outline-none focus:text-[#2563EB] transition">
+                    <i data-lucide="eye" class="w-5 h-5 pointer-events-none"></i>
+                  </button>
+                </div>
               </div>
 
-              <button type="submit" id="btn-submit-login" class="w-full py-3.5 rounded-2xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold transition shadow-md">
+              <button type="submit" id="btn-submit-login" class="w-full py-3.5 rounded-2xl bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-75 disabled:cursor-not-allowed text-white text-sm font-bold transition shadow-md inline-flex items-center justify-center gap-2">
                 Masuk ke Panel Admin
               </button>
             </form>
@@ -3332,13 +3350,28 @@
         };
       }
 
+      const passwordInput = document.getElementById('login-password');
+      const togglePasswordBtn = document.getElementById('btn-toggle-password');
+      togglePasswordBtn.onclick = () => {
+        const shouldHide = passwordInput.type === 'text';
+        passwordInput.type = shouldHide ? 'password' : 'text';
+        const label = shouldHide ? 'Tampilkan kata sandi' : 'Sembunyikan kata sandi';
+        togglePasswordBtn.setAttribute('aria-label', label);
+        togglePasswordBtn.setAttribute('title', label);
+        togglePasswordBtn.innerHTML = `<i data-lucide="${shouldHide ? 'eye' : 'eye-off'}" class="w-5 h-5 pointer-events-none"></i>`;
+        if (window.lucide) lucide.createIcons({ root: togglePasswordBtn });
+        passwordInput.focus();
+      };
+
       document.getElementById('admin-login-form').onsubmit = async (e) => {
         e.preventDefault();
         const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const btn = document.getElementById('btn-submit-login');
+        const defaultButtonContent = 'Masuk ke Panel Admin';
         btn.disabled = true;
-        btn.textContent = 'Memverifikasi Akun...';
+        btn.setAttribute('aria-busy', 'true');
+        btn.innerHTML = '<span class="login-spinner" aria-hidden="true"></span><span>Memverifikasi Akun...</span>';
 
         try {
           if (IS_PREVIEW) {
@@ -3376,7 +3409,8 @@
         } catch (err) {
           showToast(err.message || 'Gagal login.', 'error');
           btn.disabled = false;
-          btn.textContent = 'Masuk ke Panel Admin';
+          btn.removeAttribute('aria-busy');
+          btn.innerHTML = defaultButtonContent;
         }
       };
 
