@@ -1207,6 +1207,7 @@
     const state = {
       route: 'public', // 'public' | 'login' | 'admin'
       adminTab: 'dashboard',
+      pendingAdminTab: null,
       sidebarCollapsed: false,
       adminUser: null,
       loading: true,
@@ -2871,15 +2872,14 @@
         await stopQrScannerIfRunning();
         clearPublicCountdown();
         if (state.adminUser) {
-          state.route = 'admin';
-          renderAdminLayout();
+          navigateToApp('admin', { adminTab: state.adminTab });
         } else {
-          state.route = 'login';
-          renderLoginScreen();
+          navigateToApp('login');
         }
       };
 
       renderPublicBodyArea();
+      if (state.publicMode === 'qr') startQrCameraScanner();
       if (window.lucide) lucide.createIcons();
     }
 
@@ -2918,16 +2918,13 @@
         `;
 
         document.getElementById('btn-start-qr').onclick = () => {
-          state.publicMode = 'qr';
-          renderPublicBodyArea();
-          startQrCameraScanner();
+          navigateToApp('public', { publicMode: 'qr' });
         };
 
         document.getElementById('btn-start-manual').onclick = () => {
-          state.publicMode = 'manual';
           state.manualSearchQuery = '';
           state.selectedManualTeacherId = '';
-          renderPublicBodyArea();
+          navigateToApp('public', { publicMode: 'manual' });
         };
       } else if (state.publicMode === 'qr') {
         container.innerHTML = `
@@ -2970,8 +2967,7 @@
 
         document.getElementById('btn-back-idle-qr').onclick = async () => {
           await stopQrScannerIfRunning();
-          state.publicMode = 'idle';
-          renderPublicBodyArea();
+          navigateToApp('public', { publicMode: 'idle' });
         };
 
         document.getElementById('btn-submit-qr-fallback').onclick = async () => {
@@ -3079,8 +3075,7 @@
         };
 
         document.getElementById('btn-back-idle-manual').onclick = () => {
-          state.publicMode = 'idle';
-          renderPublicBodyArea();
+          navigateToApp('public', { publicMode: 'idle' });
         };
 
         document.getElementById('btn-confirm-manual-attendance').onclick = async () => {
@@ -3185,10 +3180,7 @@
 
         document.getElementById('btn-finish-now').onclick = () => {
           clearPublicCountdown();
-          state.publicMode = 'idle';
-          state.publicResult = null;
-          renderPublicBodyArea();
-          if (window.lucide) lucide.createIcons();
+          navigateToApp('public', { publicMode: 'idle' });
         };
       }
 
@@ -3243,8 +3235,7 @@
       } catch (err) {
         playAudioChime('error');
         showToast(err.message, 'error');
-        state.publicMode = 'idle';
-        renderPublicBodyArea();
+        navigateToApp('public', { publicMode: 'idle' });
       } finally {
         setTimeout(() => { qrScanLock = false; }, 1200);
       }
@@ -3256,6 +3247,7 @@
       state.publicResult = result;
       state.publicMode = 'result';
       state.publicCountdown = Number(cfg.jeda_reset_publik_detik || 8);
+      updateAppHistory('public', { publicMode: 'result' });
       renderPublicBodyArea();
 
       const isLate = result.status === 'Terlambat';
@@ -3277,10 +3269,8 @@
         if (numEl) numEl.textContent = state.publicCountdown;
         if (state.publicCountdown <= 0) {
           clearPublicCountdown();
-          state.publicMode = 'idle';
-          state.publicResult = null;
           if (state.route === 'public') {
-            renderPublicBodyArea();
+            navigateToApp('public', { publicMode: 'idle', replace: true });
           }
         }
       }, 1000);
@@ -3350,9 +3340,7 @@
       `;
 
       document.getElementById('btn-back-public-from-login').onclick = () => {
-        state.route = 'public';
-        state.publicMode = 'idle';
-        renderPublicScreen();
+        navigateToApp('public', { publicMode: 'idle' });
       };
 
       if (IS_PREVIEW) {
@@ -3397,9 +3385,8 @@
                 target_id: 'preview_admin_01',
                 detail_perubahan: 'Admin masuk ke dashboard administrasi'
               });
-              state.route = 'admin';
               showToast('Selamat datang kembali, Administrator!', 'success');
-              renderAdminLayout();
+              navigateToApp('admin', { adminTab: state.pendingAdminTab || 'dashboard' });
             } else {
               throw new Error('Email atau kata sandi Admin tidak sesuai.');
             }
@@ -3415,9 +3402,8 @@
               target_id: cred.user.uid,
               detail_perubahan: 'Admin berhasil login via Firebase Auth'
             });
-            state.route = 'admin';
             showToast('Login berhasil!', 'success');
-            renderAdminLayout();
+            navigateToApp('admin', { adminTab: state.pendingAdminTab || 'dashboard' });
           }
         } catch (err) {
           showToast(err.message || 'Gagal login.', 'error');
@@ -3470,9 +3456,158 @@
 
     const ADMIN_MENUS = ADMIN_MENU_GROUPS.flatMap(g => g.items);
 
-    function switchAdminTab(newTab) {
-      if (state.adminTab === newTab) return;
-      state.adminTab = newTab;
+    // =========================================================================
+    // 9A. ROUTING BERBASIS HASH (REFRESH & TOMBOL KEMBALI)
+    // =========================================================================
+    function normalizeAdminTab(tab) {
+      const candidate = String(tab || 'dashboard');
+      return ADMIN_MENUS.some(menu => menu.id === candidate) ? candidate : 'dashboard';
+    }
+
+    function normalizePublicMode(mode) {
+      const candidate = String(mode || 'idle');
+      return ['idle', 'qr', 'manual', 'result'].includes(candidate) ? candidate : 'idle';
+    }
+
+    function parseAppLocation() {
+      const rawHash = decodeURIComponent(String(window.location.hash || '').replace(/^#/, ''));
+      const [section, value] = rawHash.split('/');
+
+      if (section === 'admin') {
+        return { route: 'admin', adminTab: normalizeAdminTab(value) };
+      }
+      if (section === 'login') {
+        return { route: 'login' };
+      }
+      if (section === 'public') {
+        return { route: 'public', publicMode: normalizePublicMode(value) };
+      }
+      return { route: 'public', publicMode: 'idle' };
+    }
+
+    function getAppHash(route, { adminTab = state.adminTab, publicMode = state.publicMode } = {}) {
+      if (route === 'admin') return `#admin/${normalizeAdminTab(adminTab)}`;
+      if (route === 'login') return '#login';
+      return publicMode && publicMode !== 'idle' ? `#public/${normalizePublicMode(publicMode)}` : '#public';
+    }
+
+    function updateAppHistory(route, options = {}) {
+      const hash = getAppHash(route, options);
+      if (window.location.hash === hash) return;
+      const method = options.replace ? 'replaceState' : 'pushState';
+      window.history[method]({ appRoute: hash }, '', hash);
+    }
+
+    function renderCurrentRoute() {
+      if (state.route === 'admin') {
+        if (state.adminUser) {
+          renderAdminLayout();
+        } else {
+          state.route = 'login';
+          updateAppHistory('login', { replace: true });
+          renderLoginScreen();
+        }
+      } else if (state.route === 'login') {
+        renderLoginScreen();
+      } else {
+        state.route = 'public';
+        renderPublicScreen();
+      }
+    }
+
+    function navigateToApp(route, options = {}) {
+      const nextRoute = route === 'admin' || route === 'login' ? route : 'public';
+
+      if (nextRoute === 'admin') {
+        state.route = 'admin';
+        state.adminTab = normalizeAdminTab(options.adminTab || state.pendingAdminTab || state.adminTab);
+        state.pendingAdminTab = null;
+      } else if (nextRoute === 'login') {
+        state.route = 'login';
+      } else {
+        state.route = 'public';
+        state.publicMode = normalizePublicMode(options.publicMode || 'idle');
+        if (state.publicMode === 'idle') state.publicResult = null;
+      }
+
+      updateAppHistory(nextRoute, {
+        adminTab: state.adminTab,
+        publicMode: state.publicMode,
+        replace: options.replace === true
+      });
+      renderCurrentRoute();
+    }
+
+    function restoreRouteFromLocation() {
+      const parsed = parseAppLocation();
+
+      if (parsed.route === 'admin') {
+        state.pendingAdminTab = parsed.adminTab;
+        if (state.adminUser) {
+          state.route = 'admin';
+          state.adminTab = parsed.adminTab;
+          renderAdminLayout();
+        } else {
+          state.route = 'login';
+          updateAppHistory('login', { replace: true });
+          renderLoginScreen();
+        }
+        return;
+      }
+
+      state.route = parsed.route;
+      if (parsed.route === 'public') {
+        state.publicMode = parsed.publicMode === 'result' && !state.publicResult
+          ? 'idle'
+          : parsed.publicMode;
+        if (state.publicMode === 'idle' && parsed.publicMode === 'result') {
+          updateAppHistory('public', { publicMode: 'idle', replace: true });
+        }
+      }
+      renderCurrentRoute();
+    }
+
+    async function handleBrowserNavigation() {
+      const parsed = parseAppLocation();
+      if (state.publicMode === 'qr' && !(parsed.route === 'public' && parsed.publicMode === 'qr')) {
+        await stopQrScannerIfRunning();
+      }
+
+      if (parsed.route === 'admin') {
+        state.pendingAdminTab = parsed.adminTab;
+        if (!state.adminUser) {
+          state.route = 'login';
+          updateAppHistory('login', { replace: true });
+          renderLoginScreen();
+          return;
+        }
+        state.route = 'admin';
+        state.adminTab = parsed.adminTab;
+        renderAdminLayout();
+        return;
+      }
+
+      state.route = parsed.route;
+      if (parsed.route === 'public') {
+        state.publicMode = parsed.publicMode === 'result' && !state.publicResult
+          ? 'idle'
+          : parsed.publicMode;
+      }
+      renderCurrentRoute();
+    }
+
+    window.addEventListener('popstate', () => {
+      handleBrowserNavigation().catch(err => console.error('Navigation error:', err));
+    });
+
+    function switchAdminTab(newTab, { pushHistory = true } = {}) {
+      const normalizedTab = normalizeAdminTab(newTab);
+      if (state.adminTab === normalizedTab) {
+        if (pushHistory) updateAppHistory('admin', { adminTab: normalizedTab });
+        return;
+      }
+      state.adminTab = normalizedTab;
+      if (pushHistory) updateAppHistory('admin', { adminTab: normalizedTab });
 
       // 1. Update visual active state di desktop sidebar tanpa merombak ulang elemen DOM
       document.querySelectorAll('.admin-nav-btn').forEach(btn => {
@@ -3711,9 +3846,7 @@
       };
 
       const switchPublic = () => {
-        state.route = 'public';
-        state.publicMode = 'idle';
-        renderPublicScreen();
+        navigateToApp('public', { publicMode: 'idle' });
       };
       document.getElementById('btn-switch-public-desktop').onclick = switchPublic;
       document.getElementById('btn-switch-public-mobile').onclick = switchPublic;
@@ -3733,10 +3866,8 @@
             if (!IS_PREVIEW) {
               await dbAdapter.getAll({ includeAdminData: false });
             }
-            state.route = 'public';
-            state.publicMode = 'idle';
             showToast('Anda telah keluar dari sesi Admin.', 'info');
-            renderPublicScreen();
+            navigateToApp('public', { publicMode: 'idle' });
           }
         });
       };
@@ -9472,6 +9603,17 @@
                 state.adminUser = { uid: user.uid, email: user.email };
                 await dbAdapter.getAll({ includeAdminData: true });
                 await dbAdapter.syncPublicTeacherIndex();
+
+                const parsedLocation = parseAppLocation();
+                const requestedAdminTab = state.pendingAdminTab || (
+                  parsedLocation.route === 'admin' ? parsedLocation.adminTab : null
+                );
+                if (requestedAdminTab) {
+                  state.route = 'admin';
+                  state.adminTab = normalizeAdminTab(requestedAdminTab);
+                  updateAppHistory('admin', { adminTab: state.adminTab, replace: true });
+                  renderAdminLayout();
+                }
               } catch (err) {
                 console.error('Admin session initialization error:', err);
                 state.adminUser = null;
@@ -9479,16 +9621,16 @@
               }
             } else {
               state.adminUser = null;
-            }
-            if (state.route === 'admin' && !state.adminUser) {
-              state.route = 'public';
-              renderPublicScreen();
+              if (parseAppLocation().route === 'admin' || state.route === 'admin') {
+                state.route = 'login';
+                updateAppHistory('login', { replace: true });
+                renderLoginScreen();
+              }
             }
           });
         }
 
-        state.route = 'public';
-        renderPublicScreen();
+        restoreRouteFromLocation();
       } catch (err) {
         console.error('Bootstrap error:', err);
         document.getElementById('app-root').innerHTML = `
