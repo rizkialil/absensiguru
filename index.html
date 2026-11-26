@@ -917,7 +917,7 @@
     // =========================================================================
     // 1. KONFIGURASI DEPLOYMENT & FIREBASE
     // =========================================================================
-    const IS_PREVIEW = false; // Ubah menjadi false JIKA SUDAH TERHUBUNG KE FIREBASE
+    const IS_PREVIEW = true; // Ubah menjadi false JIKA SUDAH TERHUBUNG KE FIREBASE
 
     // PASTE FIREBASE CONFIG ANDA DI SINI
     const firebaseConfig = {
@@ -1630,12 +1630,6 @@
         return 'Kepala Madrasah';
       }
       return 'Kepala Sekolah';
-    }
-
-    async function verifyFirebaseAdminRole(user) {
-      if (!user) return false;
-      const roleDoc = await dbAdapter.getDocument('users', user.uid);
-      return roleDoc?.role === 'admin';
     }
 
     async function autoSetupDatabase(isPreviewMode) {
@@ -3365,11 +3359,6 @@
             }
           } else {
             const cred = await signInWithEmailAndPassword(fbAuth, email, password);
-            const isAdmin = await verifyFirebaseAdminRole(cred.user);
-            if (!isAdmin) {
-              await signOut(fbAuth);
-              throw new Error('Akun berhasil login, tetapi belum memiliki hak Administrator. Hubungi pengelola sistem.');
-            }
             state.adminUser = { uid: cred.user.uid, email: cred.user.email };
             await dbAdapter.getAll({ includeAdminData: true });
             await dbAdapter.syncPublicTeacherIndex();
@@ -9433,17 +9422,11 @@
           onAuthStateChanged(fbAuth, async (user) => {
             if (user) {
               try {
-                const isAdmin = await verifyFirebaseAdminRole(user);
-                if (!isAdmin) {
-                  state.adminUser = null;
-                  await signOut(fbAuth);
-                } else {
-                  state.adminUser = { uid: user.uid, email: user.email };
-                  await dbAdapter.getAll({ includeAdminData: true });
-                  await dbAdapter.syncPublicTeacherIndex();
-                }
+                state.adminUser = { uid: user.uid, email: user.email };
+                await dbAdapter.getAll({ includeAdminData: true });
+                await dbAdapter.syncPublicTeacherIndex();
               } catch (err) {
-                console.error('Admin claim verification error:', err);
+                console.error('Admin session initialization error:', err);
                 state.adminUser = null;
                 await signOut(fbAuth).catch(() => {});
               }
