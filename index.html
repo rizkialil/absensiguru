@@ -2423,6 +2423,54 @@
       };
     }
 
+    function showPublicAttendanceNotice({ title, message, type = 'error', onOk = null }) {
+      const noticeConfig = {
+        success: {
+          icon: 'check-circle-2',
+          iconClass: 'bg-emerald-100 text-emerald-600',
+          buttonClass: 'bg-emerald-600 hover:bg-emerald-700'
+        },
+        warning: {
+          icon: 'alert-triangle',
+          iconClass: 'bg-amber-100 text-amber-600',
+          buttonClass: 'bg-amber-600 hover:bg-amber-700'
+        },
+        error: {
+          icon: 'alert-circle',
+          iconClass: 'bg-rose-100 text-rose-600',
+          buttonClass: 'bg-rose-600 hover:bg-rose-700'
+        }
+      }[type] || {
+        icon: 'info',
+        iconClass: 'bg-[#E2E8F0] text-[#2563EB]',
+        buttonClass: 'bg-[#2563EB] hover:bg-[#1D4ED8]'
+      };
+
+      openModal(`
+        <div class="p-6 text-center" role="dialog" aria-modal="true" aria-labelledby="public-attendance-notice-title">
+          <div class="w-14 h-14 mx-auto rounded-2xl flex items-center justify-center ${noticeConfig.iconClass}">
+            <i data-lucide="${noticeConfig.icon}" class="w-7 h-7"></i>
+          </div>
+          <h3 id="public-attendance-notice-title" class="mt-4 text-lg font-extrabold text-[#0F172A]">${escapeHtml(title)}</h3>
+          <p class="mt-2 text-sm text-[#475569] leading-relaxed whitespace-pre-line">${escapeHtml(message)}</p>
+          <button id="btn-public-attendance-notice-ok" type="button" class="mt-6 w-full px-4 py-3 rounded-xl text-sm font-bold text-white ${noticeConfig.buttonClass} transition shadow-sm active:scale-95">
+            OK
+          </button>
+        </div>
+      `, 'max-w-md');
+
+      const okButton = document.getElementById('btn-public-attendance-notice-ok');
+      if (okButton) {
+        okButton.focus();
+        okButton.onclick = () => {
+          closeModal();
+          if (typeof onOk === 'function') {
+            setTimeout(() => onOk(), 180);
+          }
+        };
+      }
+    }
+
     // Audio Chime Synthesizer via Web Audio API (Zero External Assets)
     function playAudioChime(type = 'success') {
       try {
@@ -2974,7 +3022,11 @@
         document.getElementById('btn-submit-qr-fallback').onclick = async () => {
           const val = document.getElementById('input-qr-token-fallback').value.trim();
           if (!val) {
-            showToast('Silakan masukkan token QR terlebih dahulu.', 'warning');
+            showPublicAttendanceNotice({
+              title: 'Token QR Belum Diisi',
+              message: 'Silakan masukkan token QR terlebih dahulu.',
+              type: 'warning'
+            });
             return;
           }
           await handleQrScannedSuccess(val);
@@ -3093,7 +3145,11 @@
               showAttendanceResultCard(result);
             }
           } catch (err) {
-            showToast(err.message, 'error');
+            showPublicAttendanceNotice({
+              title: 'Absensi Gagal',
+              message: err.message,
+              type: 'error'
+            });
             btn.disabled = false;
             btn.textContent = 'Konfirmasi Identitas & Lanjut';
           }
@@ -3235,8 +3291,12 @@
         }
       } catch (err) {
         playAudioChime('error');
-        showToast(err.message, 'error');
-        navigateToApp('public', { publicMode: 'idle' });
+        showPublicAttendanceNotice({
+          title: 'Absensi Gagal',
+          message: err.message,
+          type: 'error',
+          onOk: () => navigateToApp('public', { publicMode: 'idle' })
+        });
       } finally {
         setTimeout(() => { qrScanLock = false; }, 1200);
       }
@@ -3255,14 +3315,18 @@
       const isAbsent = result.status === 'Tidak Hadir';
       const isDispensasi = Boolean(result.isDispensasi);
       playAudioChime(isAbsent ? 'error' : (isLate || isDispensasi) ? 'warning' : 'success');
-      const toastType = isAbsent ? 'error' : isLate ? 'warning' : 'success';
+      const noticeType = isAbsent ? 'error' : isLate ? 'warning' : 'success';
       const count = result.scheduleCount || (result.schedules ? result.schedules.length : 1);
-      const toastMsg = isLate && result.menit_terlambat > 0
+      const noticeMessage = isLate && result.menit_terlambat > 0
         ? `Presensi ${result.teacher.nama_lengkap} tercatat Terlambat (+${result.menit_terlambat} mnt). Seluruh (${count}) jadwal KBM hari ini tersimpan.`
         : isDispensasi
           ? `Presensi ${result.teacher.nama_lengkap} tercatat Hadir (Toleransi Dispensasi). Seluruh (${count}) jadwal KBM hari ini tersimpan.`
           : `Presensi ${result.teacher.nama_lengkap} berhasil (${result.status}). Seluruh (${count}) jadwal KBM hari ini tersimpan.`;
-      showToast(toastMsg, toastType);
+      showPublicAttendanceNotice({
+        title: isAbsent ? 'Absensi Tidak Hadir' : isLate ? 'Absensi Terlambat' : 'Absensi Berhasil',
+        message: noticeMessage,
+        type: noticeType
+      });
 
       state.publicCountdownTimer = setInterval(() => {
         state.publicCountdown -= 1;
