@@ -946,12 +946,12 @@
 
     // PASTE FIREBASE CONFIG ANDA DI SINI
     const firebaseConfig = {
-      apiKey: "AIzaSyC7niPrtrD8BGgyuxbIfvnIXxysJkPBKdk",
-      authDomain: "absensi-guru-e4e03.firebaseapp.com",
-      projectId: "absensi-guru-e4e03",
-      storageBucket: "absensi-guru-e4e03.firebasestorage.app",
-      messagingSenderId: "806523529275",
-      appId: "1:806523529275:web:b870489f1dff5e9524d41e"
+  apiKey: "AIzaSyC7niPrtrD8BGgyuxbIfvnIXxysJkPBKdk",
+  authDomain: "absensi-guru-e4e03.firebaseapp.com",
+  projectId: "absensi-guru-e4e03",
+  storageBucket: "absensi-guru-e4e03.firebasestorage.app",
+  messagingSenderId: "806523529275",
+  appId: "1:806523529275:web:b870489f1dff5e9524d41e"
     };
 
     function validateProductionFirebaseConfig() {
@@ -1210,6 +1210,7 @@
       pendingAdminTab: null,
       sidebarCollapsed: false,
       adminUser: null,
+      authReady: IS_PREVIEW,
       loading: true,
       // Data Koleksi
       settings: null,
@@ -3498,10 +3499,28 @@
       window.history[method]({ appRoute: hash }, '', hash);
     }
 
+    function renderAuthLoadingScreen() {
+      const root = document.getElementById('app-root');
+      if (!root) return;
+      root.innerHTML = `
+        <div class="min-h-screen w-full bg-[#F8FAFC] flex items-center justify-center p-4">
+          <div class="w-full max-w-sm bg-white rounded-3xl shadow-sm border border-[#E2E8F0] p-8 text-center animate-fade-up">
+            <div class="w-14 h-14 mx-auto rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
+              <span class="login-spinner" aria-hidden="true"></span>
+            </div>
+            <h1 class="mt-5 text-base font-extrabold text-[#0F172A]">Memulihkan sesi</h1>
+            <p class="mt-1 text-xs text-[#64748B]">Menyiapkan halaman aplikasi...</p>
+          </div>
+        </div>
+      `;
+    }
+
     function renderCurrentRoute() {
       if (state.route === 'admin') {
         if (state.adminUser) {
           renderAdminLayout();
+        } else if (!state.authReady && !IS_PREVIEW) {
+          renderAuthLoadingScreen();
         } else {
           state.route = 'login';
           updateAppHistory('login', { replace: true });
@@ -3543,6 +3562,11 @@
 
       if (parsed.route === 'admin') {
         state.pendingAdminTab = parsed.adminTab;
+        if (!state.authReady && !IS_PREVIEW) {
+          state.route = 'admin';
+          renderAuthLoadingScreen();
+          return;
+        }
         if (state.adminUser) {
           state.route = 'admin';
           state.adminTab = parsed.adminTab;
@@ -3575,6 +3599,11 @@
 
       if (parsed.route === 'admin') {
         state.pendingAdminTab = parsed.adminTab;
+        if (!state.authReady && !IS_PREVIEW) {
+          state.route = 'admin';
+          renderAuthLoadingScreen();
+          return;
+        }
         if (!state.adminUser) {
           state.route = 'login';
           updateAppHistory('login', { replace: true });
@@ -9603,6 +9632,7 @@
                 state.adminUser = { uid: user.uid, email: user.email };
                 await dbAdapter.getAll({ includeAdminData: true });
                 await dbAdapter.syncPublicTeacherIndex();
+                state.authReady = true;
 
                 const parsedLocation = parseAppLocation();
                 const requestedAdminTab = state.pendingAdminTab || (
@@ -9617,10 +9647,17 @@
               } catch (err) {
                 console.error('Admin session initialization error:', err);
                 state.adminUser = null;
+                state.authReady = true;
                 await signOut(fbAuth).catch(() => {});
+                if (state.route === 'admin' || parseAppLocation().route === 'admin') {
+                  state.route = 'login';
+                  updateAppHistory('login', { replace: true });
+                  renderLoginScreen();
+                }
               }
             } else {
               state.adminUser = null;
+              state.authReady = true;
               if (parseAppLocation().route === 'admin' || state.route === 'admin') {
                 state.route = 'login';
                 updateAppHistory('login', { replace: true });
