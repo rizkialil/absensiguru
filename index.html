@@ -2525,6 +2525,8 @@
     // Satu context dipakai bersama agar browser mobile tidak memblokir suara
     // setelah proses kamera/GPS/Firestore selesai secara asynchronous.
     let sharedAudioContext = null;
+    let sharedAudioCompressor = null;
+    let sharedAudioCompressorContext = null;
 
     function getSharedAudioContext() {
       try {
@@ -2552,8 +2554,35 @@
       }
     }
 
+    function getSharedAudioOutput(ctx) {
+      if (!sharedAudioCompressor || sharedAudioCompressorContext !== ctx) {
+        sharedAudioCompressor = ctx.createDynamicsCompressor();
+        sharedAudioCompressor.threshold.setValueAtTime(-18, ctx.currentTime);
+        sharedAudioCompressor.knee.setValueAtTime(12, ctx.currentTime);
+        sharedAudioCompressor.ratio.setValueAtTime(8, ctx.currentTime);
+        sharedAudioCompressor.attack.setValueAtTime(0.003, ctx.currentTime);
+        sharedAudioCompressor.release.setValueAtTime(0.22, ctx.currentTime);
+        sharedAudioCompressor.connect(ctx.destination);
+        sharedAudioCompressorContext = ctx;
+      }
+      return sharedAudioCompressor;
+    }
+
+    function vibrateForAttendance(type) {
+      try {
+        if (!navigator.vibrate) return;
+        const pattern = type === 'success'
+          ? 40
+          : type === 'warning'
+            ? [35, 45, 35]
+            : 90;
+        navigator.vibrate(pattern);
+      } catch (e) {}
+    }
+
     async function playAudioChime(type = 'success') {
       try {
+        vibrateForAttendance(type);
         const ctx = getSharedAudioContext();
         if (!ctx) return;
         if (ctx.state !== 'running') {
@@ -2561,16 +2590,17 @@
         }
         if (ctx.state !== 'running') return;
         const now = ctx.currentTime + 0.01;
+        const output = getSharedAudioOutput(ctx);
         if (type === 'success') {
           // Melodious two-tone ascending chime (D5 -> A5)
           const osc1 = ctx.createOscillator();
           const gain1 = ctx.createGain();
           osc1.type = 'sine';
           osc1.frequency.setValueAtTime(587.33, now); // D5
-          gain1.gain.setValueAtTime(0.12, now);
+          gain1.gain.setValueAtTime(0.25, now);
           gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
           osc1.connect(gain1);
-          gain1.connect(ctx.destination);
+          gain1.connect(output);
           osc1.start(now);
           osc1.stop(now + 0.35);
 
@@ -2578,10 +2608,10 @@
           const gain2 = ctx.createGain();
           osc2.type = 'sine';
           osc2.frequency.setValueAtTime(880, now + 0.12); // A5
-          gain2.gain.setValueAtTime(0.16, now + 0.12);
+          gain2.gain.setValueAtTime(0.30, now + 0.12);
           gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
           osc2.connect(gain2);
-          gain2.connect(ctx.destination);
+          gain2.connect(output);
           osc2.start(now + 0.12);
           osc2.stop(now + 0.55);
         } else if (type === 'warning') {
@@ -2589,10 +2619,10 @@
           const gain = ctx.createGain();
           osc.type = 'triangle';
           osc.frequency.setValueAtTime(440, now); // A4
-          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.setValueAtTime(0.28, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
           osc.connect(gain);
-          gain.connect(ctx.destination);
+          gain.connect(output);
           osc.start(now);
           osc.stop(now + 0.4);
         } else if (type === 'error') {
@@ -2600,10 +2630,10 @@
           const gain = ctx.createGain();
           osc.type = 'sawtooth';
           osc.frequency.setValueAtTime(220, now); // A3
-          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.setValueAtTime(0.30, now);
           gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
           osc.connect(gain);
-          gain.connect(ctx.destination);
+          gain.connect(output);
           osc.start(now);
           osc.stop(now + 0.35);
         }
