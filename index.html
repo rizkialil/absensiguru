@@ -3562,7 +3562,7 @@
                 detail_perubahan: 'Admin masuk ke dashboard administrasi'
               });
               showToast('Selamat datang kembali, Administrator!', 'success');
-              navigateToApp('admin', { adminTab: state.pendingAdminTab || 'dashboard' });
+              navigateToApp('admin', { adminTab: state.pendingAdminTab || 'dashboard', replace: true });
             } else {
               throw new Error('Email atau kata sandi Admin tidak sesuai.');
             }
@@ -3579,7 +3579,7 @@
               detail_perubahan: 'Admin berhasil login via Firebase Auth'
             });
             showToast('Login berhasil!', 'success');
-            navigateToApp('admin', { adminTab: state.pendingAdminTab || 'dashboard' });
+            navigateToApp('admin', { adminTab: state.pendingAdminTab || 'dashboard', replace: true });
           }
         } catch (err) {
           showToast(err.message || 'Gagal login.', 'error');
@@ -3735,6 +3735,42 @@
       }
     }
 
+    let adminBackRestorePending = false;
+    let adminExitInProgress = false;
+
+    async function performAdminLogout() {
+      if (adminExitInProgress) return;
+      adminExitInProgress = true;
+      try {
+        if (!IS_PREVIEW && fbAuth) {
+          await signOut(fbAuth);
+        }
+        state.adminUser = null;
+        if (!IS_PREVIEW) {
+          await dbAdapter.getAll({ includeAdminData: false });
+        }
+        showToast('Anda telah keluar dari sesi Admin.', 'info');
+        navigateToApp('public', { publicMode: 'idle', replace: true });
+      } catch (err) {
+        showToast(err.message || 'Gagal keluar dari sesi Admin.', 'error');
+      } finally {
+        adminExitInProgress = false;
+      }
+    }
+
+    function requestAdminExitConfirmation() {
+      const backdrop = document.getElementById('modal-backdrop');
+      if (backdrop && !backdrop.classList.contains('hidden')) return;
+
+      confirmDialog({
+        title: 'Keluar dari Panel Admin',
+        message: 'Apakah Anda yakin ingin keluar dari sesi administrasi?',
+        confirmText: 'Ya, Keluar',
+        danger: false,
+        onConfirm: performAdminLogout
+      });
+    }
+
     function restoreRouteFromLocation() {
       const parsed = parseAppLocation();
 
@@ -3771,6 +3807,24 @@
 
     async function handleBrowserNavigation() {
       const parsed = parseAppLocation();
+
+      // Tombol kembali HP dari halaman admin meminta konfirmasi logout.
+      // Kembalikan history ke halaman admin sebelum modal ditampilkan agar
+      // tombol Batal tetap mempertahankan admin di menu yang sedang dibuka.
+      if (adminBackRestorePending) {
+        adminBackRestorePending = false;
+        if (state.route === 'admin') {
+          requestAdminExitConfirmation();
+          return;
+        }
+      }
+
+      if (state.route === 'admin') {
+        adminBackRestorePending = true;
+        window.history.forward();
+        return;
+      }
+
       if (state.publicMode === 'qr' && !(parsed.route === 'public' && parsed.publicMode === 'qr')) {
         await stopQrScannerIfRunning();
       }
@@ -4062,25 +4116,7 @@
       document.getElementById('btn-switch-public-mobile').onclick = switchPublic;
       document.getElementById('btn-theme-admin')?.addEventListener('click', toggleAppTheme);
 
-      document.getElementById('btn-admin-logout').onclick = () => {
-        confirmDialog({
-          title: 'Keluar dari Panel Admin',
-          message: 'Apakah Anda yakin ingin keluar dari sesi administrasi?',
-          confirmText: 'Ya, Keluar',
-          danger: false,
-          onConfirm: async () => {
-            if (!IS_PREVIEW && fbAuth) {
-              await signOut(fbAuth);
-            }
-            state.adminUser = null;
-            if (!IS_PREVIEW) {
-              await dbAdapter.getAll({ includeAdminData: false });
-            }
-            showToast('Anda telah keluar dari sesi Admin.', 'info');
-            navigateToApp('public', { publicMode: 'idle', replace: true });
-          }
-        });
-      };
+      document.getElementById('btn-admin-logout').onclick = requestAdminExitConfirmation;
 
       document.getElementById('global-admin-search').oninput = (e) => {
         state.searchGlobal = e.target.value;
