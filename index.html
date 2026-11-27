@@ -9667,16 +9667,16 @@
               <!-- 3 Kolom Durasi Menit -->
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label class="block text-xs font-bold text-[#475569] mb-1">Mulai Buka Scan (Menit Sebelum)</label>
-                  <input id="set-buka-menit" type="number" min="0" max="120" required value="${cfg.menit_buka_sebelum_jadwal}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] text-xs font-bold tabular-nums" />
+                  <label class="block text-xs font-bold text-[#475569] mb-1">Mulai Buka Absen (Menit sebelum jadwal)</label>
+                  <input id="set-buka-menit" type="number" min="0" max="120" required value="${cfg.menit_buka_sebelum_jadwal}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-[#475569] mb-1">Durasi Toleransi (Menit)</label>
-                  <input id="set-toleransi-menit" type="number" min="0" max="120" required value="${cfg.toleransi_terlambat_menit}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] text-xs font-bold tabular-nums" />
+                  <label class="block text-xs font-bold text-[#475569] mb-1">Durasi Toleransi (Menit setelah jadwal)</label>
+                  <input id="set-toleransi-menit" type="number" min="0" max="120" required value="${cfg.toleransi_terlambat_menit}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
                 </div>
                 <div>
-                  <label class="block text-xs font-bold text-[#475569] mb-1">Batas Akhir Scan (Menit Setelah)</label>
-                  <input id="set-batas-menit" type="number" min="0" max="240" required value="${cfg.batas_akhir_menit_setelah_jadwal}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] text-xs font-bold tabular-nums" />
+                  <label class="block text-xs font-bold text-[#475569] mb-1">Batas Akhir Absen (Menit setelah jadwal)</label>
+                  <input id="set-batas-menit" type="number" min="0" max="240" required value="${cfg.batas_akhir_menit_setelah_jadwal}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
                 </div>
               </div>
             </div>
@@ -9691,7 +9691,7 @@
               </div>
               <div>
                 <label class="block text-xs font-bold text-[#475569] mb-1">Jeda Reset Layar Publik (Detik)</label>
-                <input id="set-reset-detik" type="number" min="3" max="60" required value="${cfg.jeda_reset_publik_detik || 8}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] text-xs font-bold tabular-nums" />
+                <input id="set-reset-detik" type="number" min="3" max="60" required value="${cfg.jeda_reset_publik_detik || 8}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
               </div>
             </div>
 
