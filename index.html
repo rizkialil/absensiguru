@@ -9669,14 +9669,17 @@
                 <div>
                   <label class="block text-xs font-bold text-[#475569] mb-1">Mulai Buka Absen</label>
                   <input id="set-buka-menit" type="number" min="0" max="120" required value="${cfg.menit_buka_sebelum_jadwal}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
+                  <p class="mt-1 text-[10px] leading-relaxed text-[#94A3B8]">Absensi dibuka ${cfg.menit_buka_sebelum_jadwal} menit sebelum jadwal dimulai.</p>
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-[#475569] mb-1">Durasi Toleransi</label>
                   <input id="set-toleransi-menit" type="number" min="0" max="120" required value="${cfg.toleransi_terlambat_menit}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
+                  <p class="mt-1 text-[10px] leading-relaxed text-[#94A3B8]">${cfg.mode_toleransi === 'KETAT_TERLAMBAT' ? 'Setelah jadwal dimulai, guru langsung dicatat Terlambat.' : `Dalam mode Fleksibel, hingga ${cfg.toleransi_terlambat_menit} menit setelah jadwal masih dicatat Hadir.`}</p>
                 </div>
                 <div>
                   <label class="block text-xs font-bold text-[#475569] mb-1">Batas Akhir Absen</label>
                   <input id="set-batas-menit" type="number" min="0" max="240" required value="${cfg.batas_akhir_menit_setelah_jadwal}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
+                  <p class="mt-1 text-[10px] leading-relaxed text-[#94A3B8]">Dihitung dari jam mulai jadwal, bukan dari waktu buka absensi.</p>
                 </div>
               </div>
             </div>
@@ -9692,6 +9695,7 @@
               <div>
                 <label class="block text-xs font-bold text-[#475569] mb-1">Jeda Reset Halaman Publik</label>
                 <input id="set-reset-detik" type="number" min="3" max="60" required value="${cfg.jeda_reset_publik_detik || 8}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums" />
+                <p class="mt-1 text-[10px] leading-relaxed text-[#94A3B8]">Layar kembali ke halaman awal setelah ${cfg.jeda_reset_publik_detik || 8} detik.</p>
               </div>
             </div>
 
