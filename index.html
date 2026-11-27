@@ -1675,7 +1675,7 @@
 
       return {
         nama_instansi: 'MA Negeri 1 Cendekia Nusantara',
-        alamat_instansi: 'Jl. Pendidikan No. 45, Jakarta Selatan',
+        alamat_instansi: '',
         logo_url: '',
         kop_baris1: '',
         kop_baris2: '',
@@ -9127,7 +9127,7 @@
         const baris1 = cfg.kop_baris1 ? cfg.kop_baris1.trim() : '';
         const baris2 = cfg.kop_baris2 ? cfg.kop_baris2.trim() : '';
         const baris3 = cfg.kop_baris3 ? cfg.kop_baris3.trim() : '';
-        const baris4 = (cfg.kop_baris4 ? cfg.kop_baris4.trim() : '') || cfg.alamat_instansi || '';
+        const baris4 = cfg.kop_baris4 ? cfg.kop_baris4.trim() : '';
         const hasLogo = Boolean(cfg.logo_url && cfg.logo_url.trim());
         const jabatanKepala = getJabatanPimpinan(cfg);
 
@@ -9407,16 +9407,31 @@
           <div class="space-y-3.5">
             <div>
               <label for="admin-current-password" class="block text-xs font-bold text-[#475569] mb-1.5">Password Saat Ini</label>
-              <input id="admin-current-password" type="password" autocomplete="current-password" required class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
+              <div class="relative">
+                <input id="admin-current-password" type="password" autocomplete="current-password" required class="w-full px-3.5 py-2.5 pr-11 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
+                <button type="button" data-password-toggle data-password-target="admin-current-password" aria-label="Tampilkan password saat ini" class="absolute inset-y-0 right-0 px-3 text-[#94A3B8] hover:text-[#2563EB] transition">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
             </div>
             <div>
               <label for="admin-new-password" class="block text-xs font-bold text-[#475569] mb-1.5">Password Baru</label>
-              <input id="admin-new-password" type="password" minlength="8" autocomplete="new-password" required class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
+              <div class="relative">
+                <input id="admin-new-password" type="password" minlength="8" autocomplete="new-password" required class="w-full px-3.5 py-2.5 pr-11 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
+                <button type="button" data-password-toggle data-password-target="admin-new-password" aria-label="Tampilkan password baru" class="absolute inset-y-0 right-0 px-3 text-[#94A3B8] hover:text-[#2563EB] transition">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
               <p class="text-[11px] text-[#94A3B8] mt-1">Gunakan minimal 8 karakter.</p>
             </div>
             <div>
               <label for="admin-confirm-password" class="block text-xs font-bold text-[#475569] mb-1.5">Konfirmasi Password Baru</label>
-              <input id="admin-confirm-password" type="password" minlength="8" autocomplete="new-password" required class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
+              <div class="relative">
+                <input id="admin-confirm-password" type="password" minlength="8" autocomplete="new-password" required class="w-full px-3.5 py-2.5 pr-11 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-sm font-medium focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
+                <button type="button" data-password-toggle data-password-target="admin-confirm-password" aria-label="Tampilkan konfirmasi password" class="absolute inset-y-0 right-0 px-3 text-[#94A3B8] hover:text-[#2563EB] transition">
+                  <i data-lucide="eye" class="w-4 h-4"></i>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -9426,6 +9441,19 @@
           </div>
         </form>
       `, 'max-w-md');
+
+      document.querySelectorAll('[data-password-toggle]').forEach(toggle => {
+        toggle.onclick = () => {
+          const input = document.getElementById(toggle.dataset.passwordTarget);
+          if (!input) return;
+          const willShow = input.type === 'password';
+          input.type = willShow ? 'text' : 'password';
+          toggle.setAttribute('aria-label', willShow ? 'Sembunyikan password' : 'Tampilkan password');
+          toggle.innerHTML = `<i data-lucide="${willShow ? 'eye-off' : 'eye'}" class="w-4 h-4"></i>`;
+          if (window.lucide) lucide.createIcons();
+          input.focus();
+        };
+      });
 
       const form = document.getElementById('form-admin-password');
       const submitButton = document.getElementById('btn-submit-admin-password');
@@ -9521,8 +9549,8 @@
             <!-- Keamanan Akun Admin -->
             <div class="pt-3 border-t border-[#E2E8F0] space-y-3">
               <div>
-                <h3 class="text-sm font-extrabold text-[#0F172A]">Keamanan Akun Admin</h3>
-                <p class="text-[11px] text-[#64748B] mt-1 leading-relaxed">Ubah password akun Admin tanpa membuka Firebase Console.</p>
+                <h3 class="text-sm font-extrabold text-[#0F172A]">Keamanan Akun</h3>
+                <p class="text-[11px] text-[#64748B] mt-1 leading-relaxed">Ubah password akun Admin</p>
               </div>
               <button type="button" id="btn-open-admin-password" class="px-4 py-2.5 rounded-xl bg-[#EFF6FF] hover:bg-[#2563EB] text-[#2563EB] hover:text-white text-xs font-bold transition inline-flex items-center gap-2">
                 <i data-lucide="key-round" class="w-4 h-4"></i>
