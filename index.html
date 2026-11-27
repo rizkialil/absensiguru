@@ -3125,7 +3125,7 @@
 
         document.getElementById('btn-back-idle-qr').onclick = async () => {
           await stopQrScannerIfRunning();
-          navigateToApp('public', { publicMode: 'idle' });
+          navigateToApp('public', { publicMode: 'idle', replace: true });
         };
 
         document.getElementById('btn-submit-qr-fallback').onclick = async () => {
@@ -3234,7 +3234,7 @@
         };
 
         document.getElementById('btn-back-idle-manual').onclick = () => {
-          navigateToApp('public', { publicMode: 'idle' });
+          navigateToApp('public', { publicMode: 'idle', replace: true });
         };
 
         document.getElementById('btn-confirm-manual-attendance').onclick = async () => {
@@ -3343,7 +3343,7 @@
 
         document.getElementById('btn-finish-now').onclick = () => {
           clearPublicCountdown();
-          navigateToApp('public', { publicMode: 'idle' });
+          navigateToApp('public', { publicMode: 'idle', replace: true });
         };
       }
 
@@ -3406,7 +3406,7 @@
           title: 'Absensi Gagal',
           message: err.message,
           type: 'error',
-          onOk: () => navigateToApp('public', { publicMode: 'idle' })
+          onOk: () => navigateToApp('public', { publicMode: 'idle', replace: true })
         });
       } finally {
         setTimeout(() => { qrScanLock = false; }, 1200);
@@ -3419,7 +3419,7 @@
       state.publicResult = result;
       state.publicMode = 'result';
       state.publicCountdown = Number(cfg.jeda_reset_publik_detik || 8);
-      updateAppHistory('public', { publicMode: 'result' });
+      updateAppHistory('public', { publicMode: 'result', replace: true });
       renderPublicBodyArea();
 
       const isLate = result.status === 'Terlambat';
@@ -3516,7 +3516,7 @@
       `;
 
       document.getElementById('btn-back-public-from-login').onclick = () => {
-        navigateToApp('public', { publicMode: 'idle' });
+        navigateToApp('public', { publicMode: 'idle', replace: true });
       };
 
       if (IS_PREVIEW) {
@@ -3807,14 +3807,17 @@
       handleBrowserNavigation().catch(err => console.error('Navigation error:', err));
     });
 
-    function switchAdminTab(newTab, { pushHistory = true } = {}) {
+    function switchAdminTab(newTab, { pushHistory = false } = {}) {
       const normalizedTab = normalizeAdminTab(newTab);
       if (state.adminTab === normalizedTab) {
         if (pushHistory) updateAppHistory('admin', { adminTab: normalizedTab });
         return;
       }
       state.adminTab = normalizedTab;
-      if (pushHistory) updateAppHistory('admin', { adminTab: normalizedTab });
+      updateAppHistory('admin', {
+        adminTab: normalizedTab,
+        replace: !pushHistory
+      });
 
       // 1. Update visual active state di desktop sidebar tanpa merombak ulang elemen DOM
       document.querySelectorAll('.admin-nav-btn').forEach(btn => {
@@ -4053,7 +4056,7 @@
       };
 
       const switchPublic = () => {
-        navigateToApp('public', { publicMode: 'idle' });
+        navigateToApp('public', { publicMode: 'idle', replace: true });
       };
       document.getElementById('btn-switch-public-desktop').onclick = switchPublic;
       document.getElementById('btn-switch-public-mobile').onclick = switchPublic;
@@ -4074,7 +4077,7 @@
               await dbAdapter.getAll({ includeAdminData: false });
             }
             showToast('Anda telah keluar dari sesi Admin.', 'info');
-            navigateToApp('public', { publicMode: 'idle' });
+            navigateToApp('public', { publicMode: 'idle', replace: true });
           }
         });
       };
