@@ -2453,7 +2453,6 @@
             </div>
             <div class="flex-1 min-w-0">
               <h3 class="text-base font-bold text-[#0F172A] truncate">${escapeHtml(title)}</h3>
-              <p class="text-xs text-[#94A3B8]">Konfirmasi Tindakan</p>
             </div>
             <button type="button" onclick="closeModal()" class="p-1.5 rounded-xl hover:bg-[#F8FAFC] text-[#94A3B8] hover:text-[#0F172A] transition" aria-label="Tutup">
               <i data-lucide="x" class="w-4 h-4"></i>
@@ -3470,7 +3469,7 @@
                   : `<div class="w-11 h-11 rounded-2xl clay-icon-lavender flex items-center justify-center text-white font-extrabold text-lg">HG</div>`
                 }
                 <div>
-                  <h1 class="text-lg font-extrabold text-[#0F172A]">Login Administrator</h1>
+                  <h1 class="text-lg font-extrabold text-[#0F172A]">Login Admin</h1>
                   <p class="text-xs text-[#94A3B8] truncate max-w-xs" title="${escapeHtml(cfg.nama_instansi)}">${escapeHtml(cfg.nama_instansi)}</p>
                 </div>
               </div>
@@ -3775,7 +3774,7 @@
       if (backdrop && !backdrop.classList.contains('hidden')) return;
 
       confirmDialog({
-        title: 'Keluar dari Panel Admin',
+        title: 'Konfirmasi Tindakan',
         message: 'Apakah Anda yakin ingin keluar dari sesi admin?',
         confirmText: 'Ya, Keluar',
         danger: true,
