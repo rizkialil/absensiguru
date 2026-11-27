@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hadirguru-v20';
+const CACHE_NAME = 'hadirguru-v23';
 const APP_SHELL = [
   './',
   './index.html',
