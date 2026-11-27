@@ -3668,6 +3668,17 @@
       return publicMode && publicMode !== 'idle' ? `#public/${normalizePublicMode(publicMode)}` : '#public';
     }
 
+    function ensureAppHistoryEntry() {
+      if (window.history.state?.appRoute) return;
+      const parsed = parseAppLocation();
+      const hash = parsed.route === 'admin'
+        ? getAppHash('admin', { adminTab: parsed.adminTab })
+        : parsed.route === 'login'
+          ? '#login'
+          : getAppHash('public', { publicMode: parsed.publicMode });
+      window.history.replaceState({ appRoute: hash, appRoot: true }, '', hash);
+    }
+
     function updateAppHistory(route, options = {}) {
       const hash = getAppHash(route, options);
       if (window.location.hash === hash) return;
@@ -3765,7 +3776,7 @@
 
       confirmDialog({
         title: 'Keluar dari Panel Admin',
-        message: 'Apakah Anda yakin ingin keluar dari sesi administrasi?',
+        message: 'Apakah Anda yakin ingin keluar dari sesi admin?',
         confirmText: 'Ya, Keluar',
         danger: true,
         icon: 'help-circle',
@@ -3824,6 +3835,17 @@
       if (state.route === 'admin') {
         adminBackRestorePending = true;
         window.history.forward();
+        return;
+      }
+
+      // Saat sudah berada di halaman publik utama, lewati seluruh entri
+      // internal HadirGuru agar tombol kembali tidak perlu ditekan berkali-kali.
+      if (
+        state.route === 'public' &&
+        state.publicMode === 'idle' &&
+        window.history.state?.appRoute
+      ) {
+        window.history.back();
         return;
       }
 
@@ -9886,6 +9908,7 @@
           });
         }
 
+        ensureAppHistoryEntry();
         restoreRouteFromLocation();
         window.setTimeout(showInstallPromptIfAvailable, 1400);
       } catch (err) {
