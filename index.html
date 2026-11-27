@@ -3089,7 +3089,7 @@
           <div class="flex items-center justify-between mb-4">
             <div>
               <h2 class="text-lg font-bold text-[#0F172A]">Pemindaian QR Code</h2>
-              <p class="text-xs text-[#475569]">Arahkan QR Code kartu guru ke kamera perangkat</p>
+              <p class="text-xs text-[#475569]">Arahkan QR Code ke kamera</p>
             </div>
             <button id="btn-back-idle-qr" class="px-3.5 py-2 rounded-xl bg-[#F8FAFC] hover:bg-[#E8EAF3] text-xs font-bold text-[#475569] inline-flex items-center gap-1.5">
               <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Kembali
@@ -3160,7 +3160,7 @@
           <div id="manual-search-results" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div>
 
           <button id="btn-confirm-manual-attendance" disabled class="w-full py-3.5 rounded-2xl bg-[#2563EB] disabled:bg-[#D5D7E8] hover:bg-[#1D4ED8] text-white text-sm font-bold transition shadow-sm">
-            Konfirmasi Identitas & Lanjut
+            Konfirmasi
           </button>
         `;
 
@@ -3257,7 +3257,7 @@
               type: 'error'
             });
             btn.disabled = false;
-            btn.textContent = 'Konfirmasi Identitas & Lanjut';
+            btn.textContent = 'Konfirmasi';
           }
         };
       } else if (state.publicMode === 'result' && state.publicResult) {
