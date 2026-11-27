@@ -950,12 +950,12 @@
 
     // PASTE FIREBASE CONFIG ANDA DI SINI
     const firebaseConfig = {
-  apiKey: "AIzaSyC7niPrtrD8BGgyuxbIfvnIXxysJkPBKdk",
-  authDomain: "absensi-guru-e4e03.firebaseapp.com",
-  projectId: "absensi-guru-e4e03",
-  storageBucket: "absensi-guru-e4e03.firebasestorage.app",
-  messagingSenderId: "806523529275",
-  appId: "1:806523529275:web:b870489f1dff5e9524d41e"
+      apiKey: "AIzaSyC7niPrtrD8BGgyuxbIfvnIXxysJkPBKdk",
+      authDomain: "absensi-guru-e4e03.firebaseapp.com",
+      projectId: "absensi-guru-e4e03",
+      storageBucket: "absensi-guru-e4e03.firebasestorage.app",
+      messagingSenderId: "806523529275",
+      appId: "1:806523529275:web:b870489f1dff5e9524d41e"
     };
 
     function validateProductionFirebaseConfig() {
@@ -2522,15 +2522,45 @@
     }
 
     // Audio Chime Synthesizer via Web Audio API (Zero External Assets)
-    function playAudioChime(type = 'success') {
+    // Satu context dipakai bersama agar browser mobile tidak memblokir suara
+    // setelah proses kamera/GPS/Firestore selesai secara asynchronous.
+    let sharedAudioContext = null;
+
+    function getSharedAudioContext() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (!AudioCtx) return;
-        const ctx = new AudioCtx();
-        if (ctx.state === 'suspended') {
-          ctx.resume();
+        if (!AudioCtx) return null;
+        if (!sharedAudioContext || sharedAudioContext.state === 'closed') {
+          sharedAudioContext = new AudioCtx();
         }
-        const now = ctx.currentTime;
+        return sharedAudioContext;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function unlockAudioContext() {
+      try {
+        const ctx = getSharedAudioContext();
+        if (!ctx) return false;
+        if (ctx.state !== 'running') {
+          await ctx.resume();
+        }
+        return ctx.state === 'running';
+      } catch (e) {
+        return false;
+      }
+    }
+
+    async function playAudioChime(type = 'success') {
+      try {
+        const ctx = getSharedAudioContext();
+        if (!ctx) return;
+        if (ctx.state !== 'running') {
+          await ctx.resume();
+        }
+        if (ctx.state !== 'running') return;
+        const now = ctx.currentTime + 0.01;
         if (type === 'success') {
           // Melodious two-tone ascending chime (D5 -> A5)
           const osc1 = ctx.createOscillator();
@@ -2578,7 +2608,7 @@
           osc.stop(now + 0.35);
         }
       } catch (e) {
-        // Fallback silently if audio context is unavailable
+        // Fallback silently if audio context is unavailable or blocked
       }
     }
 
@@ -3016,10 +3046,12 @@
         `;
 
         document.getElementById('btn-start-qr').onclick = () => {
+          void unlockAudioContext();
           navigateToApp('public', { publicMode: 'qr' });
         };
 
         document.getElementById('btn-start-manual').onclick = () => {
+          void unlockAudioContext();
           state.manualSearchQuery = '';
           state.selectedManualTeacherId = '';
           navigateToApp('public', { publicMode: 'manual' });
@@ -3296,6 +3328,11 @@
     async function startQrCameraScanner() {
       const statusBanner = document.getElementById('qr-status-banner');
       try {
+        // Mencoba mempertahankan audio ketika halaman QR dibuka dari history/refresh.
+        void unlockAudioContext();
+        document.getElementById('qr-reader-viewport')?.addEventListener('pointerdown', () => {
+          void unlockAudioContext();
+        }, { once: true, passive: true });
         await stopQrScannerIfRunning();
         if (!window.Html5Qrcode) {
           if (statusBanner) statusBanner.textContent = 'Library scanner belum siap. Gunakan input token di bawah.';
@@ -3339,7 +3376,7 @@
           showAttendanceResultCard(result);
         }
       } catch (err) {
-        playAudioChime('error');
+        void playAudioChime('error');
         showPublicAttendanceNotice({
           title: 'Absensi Gagal',
           message: err.message,
@@ -3363,7 +3400,7 @@
       const isLate = result.status === 'Terlambat';
       const isAbsent = result.status === 'Tidak Hadir';
       const isDispensasi = Boolean(result.isDispensasi);
-      playAudioChime(isAbsent ? 'error' : (isLate || isDispensasi) ? 'warning' : 'success');
+      void playAudioChime(isAbsent ? 'error' : (isLate || isDispensasi) ? 'warning' : 'success');
       const noticeType = isAbsent ? 'error' : isLate ? 'warning' : 'success';
       const count = result.scheduleCount || (result.schedules ? result.schedules.length : 1);
       const noticeMessage = isLate && result.menit_terlambat > 0
