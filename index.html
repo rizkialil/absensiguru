@@ -1171,9 +1171,12 @@
 
       const originalContent = button.innerHTML;
       const originalDisabled = button.disabled;
+      const alignmentClasses = ['inline-flex', 'items-center', 'justify-center', 'gap-2'];
+      const addedAlignmentClasses = alignmentClasses.filter(cls => !button.classList.contains(cls));
       button.dataset.loading = 'true';
       button.disabled = true;
       button.setAttribute('aria-busy', 'true');
+      button.classList.add(...alignmentClasses);
       button.innerHTML = `<span class="login-spinner" aria-hidden="true"></span><span>${escapeHtml(loadingText)}</span>`;
 
       return () => {
@@ -1181,6 +1184,7 @@
         button.innerHTML = originalContent;
         button.disabled = originalDisabled;
         button.removeAttribute('aria-busy');
+        button.classList.remove(...addedAlignmentClasses);
         delete button.dataset.loading;
       };
     }
