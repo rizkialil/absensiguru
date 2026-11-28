@@ -1166,6 +1166,25 @@
         .replace(/'/g, '&#039;');
     }
 
+    function startButtonLoading(button, loadingText = 'Menyimpan...') {
+      if (!button || button.dataset.loading === 'true') return () => {};
+
+      const originalContent = button.innerHTML;
+      const originalDisabled = button.disabled;
+      button.dataset.loading = 'true';
+      button.disabled = true;
+      button.setAttribute('aria-busy', 'true');
+      button.innerHTML = `<span class="login-spinner" aria-hidden="true"></span><span>${escapeHtml(loadingText)}</span>`;
+
+      return () => {
+        if (button.dataset.loading !== 'true') return;
+        button.innerHTML = originalContent;
+        button.disabled = originalDisabled;
+        button.removeAttribute('aria-busy');
+        delete button.dataset.loading;
+      };
+    }
+
     // Rate Limiter Client-Side (Anti-Spam pada terminal publik)
     const rateLimiter = {
       attempts: [],
@@ -3181,7 +3200,12 @@
             });
             return;
           }
-          await handleQrScannedSuccess(val);
+          const stopLoading = startButtonLoading(document.getElementById('btn-submit-qr-fallback'), 'Memvalidasi QR...');
+          try {
+            await handleQrScannedSuccess(val);
+          } finally {
+            stopLoading();
+          }
         };
       } else if (state.publicMode === 'manual') {
         container.innerHTML = `
@@ -3283,8 +3307,7 @@
         document.getElementById('btn-confirm-manual-attendance').onclick = async () => {
           if (!state.selectedManualTeacherId) return;
           const btn = document.getElementById('btn-confirm-manual-attendance');
-          btn.disabled = true;
-          btn.textContent = 'Memvalidasi Jadwal...';
+          const stopLoading = startButtonLoading(btn, 'Memvalidasi Jadwal...');
           try {
             const result = await processTeacherAttendance({
               teacherId: state.selectedManualTeacherId,
@@ -3299,8 +3322,8 @@
               message: err.message,
               type: 'error'
             });
-            btn.disabled = false;
-            btn.textContent = 'Konfirmasi';
+          } finally {
+            stopLoading();
           }
         };
       } else if (state.publicMode === 'result' && state.publicResult) {
@@ -5339,8 +5362,10 @@
           return;
         }
 
-        const jakarta = getJakartaNow();
-        if (isEdit) {
+        const stopLoading = startButtonLoading(e.submitter || e.currentTarget.querySelector('button[type="submit"]'));
+        try {
+          const jakarta = getJakartaNow();
+          if (isEdit) {
           await dbAdapter.setDocument('teachers', teacher.id, {
             ...teacher,
             kode_guru,
@@ -5361,7 +5386,7 @@
             detail_perubahan: `Memperbarui data guru ${nama_lengkap} (${kode_guru})`
           });
           showToast('Data guru berhasil diperbarui.', 'success');
-        } else {
+          } else {
           const newTeacherId = await dbAdapter.addDocument('teachers', {
             kode_guru,
             nip,
@@ -5390,9 +5415,12 @@
             detail_perubahan: `Menambahkan guru baru ${nama_lengkap} (${kode_guru}) + Token QR`
           });
           showToast('Guru baru & Token QR berhasil dibuat.', 'success');
+          }
+          closeModal();
+          renderAdminTabContent();
+        } finally {
+          stopLoading();
         }
-        closeModal();
-        renderAdminTabContent();
       };
     }
 
@@ -5919,39 +5947,44 @@
             const btnConfirm = document.getElementById('btn-confirm-teacher-import');
             if (btnConfirm) {
               btnConfirm.onclick = async () => {
-                const toInsert = validatedRows.filter(r => r.valid);
-                const jakarta = getJakartaNow();
-                for (const item of toInsert) {
-                  const newId = await dbAdapter.addDocument('teachers', {
-                    kode_guru: item.kode,
-                    nip: item.nip,
-                    nuptk: item.nuptk,
-                    nip_nuptk: item.nipNuptk,
-                    nama_lengkap: item.nama,
-                    jenis_kelamin: item.jk,
-                    no_hp: item.hp,
-                    alamat: item.alamat,
-                    foto_url: '',
-                    status: item.status,
-                    created_at: jakarta.isoTimestamp
+                const stopLoading = startButtonLoading(btnConfirm, 'Mengimpor...');
+                try {
+                  const toInsert = validatedRows.filter(r => r.valid);
+                  const jakarta = getJakartaNow();
+                  for (const item of toInsert) {
+                    const newId = await dbAdapter.addDocument('teachers', {
+                      kode_guru: item.kode,
+                      nip: item.nip,
+                      nuptk: item.nuptk,
+                      nip_nuptk: item.nipNuptk,
+                      nama_lengkap: item.nama,
+                      jenis_kelamin: item.jk,
+                      no_hp: item.hp,
+                      alamat: item.alamat,
+                      foto_url: '',
+                      status: item.status,
+                      created_at: jakarta.isoTimestamp
+                    });
+                    const tok = generateRandomToken();
+                    await dbAdapter.setDocument('qr_tokens', tok, {
+                      token: tok,
+                      teacher_id: newId,
+                      is_active: true,
+                      created_at: jakarta.isoTimestamp
+                    });
+                  }
+                  await recordAuditLog({
+                    aksi: 'IMPORT_TEACHERS_EXCEL',
+                    entitas: 'teachers',
+                    target_id: 'BATCH',
+                    detail_perubahan: `Impor massal guru: ${toInsert.length} berhasil, ${invalidCount} dilewati`
                   });
-                  const tok = generateRandomToken();
-                  await dbAdapter.setDocument('qr_tokens', tok, {
-                    token: tok,
-                    teacher_id: newId,
-                    is_active: true,
-                    created_at: jakarta.isoTimestamp
-                  });
+                  closeModal();
+                  showToast(`Impor selesai: ${toInsert.length} berhasil, ${invalidCount} gagal/duplikat.`, 'success');
+                  renderAdminTabContent();
+                } finally {
+                  stopLoading();
                 }
-                await recordAuditLog({
-                  aksi: 'IMPORT_TEACHERS_EXCEL',
-                  entitas: 'teachers',
-                  target_id: 'BATCH',
-                  detail_perubahan: `Impor massal guru: ${toInsert.length} berhasil, ${invalidCount} dilewati`
-                });
-                closeModal();
-                showToast(`Impor selesai: ${toInsert.length} berhasil, ${invalidCount} gagal/duplikat.`, 'success');
-                renderAdminTabContent();
               };
             }
           } catch (err) {
@@ -6174,15 +6207,20 @@
             return;
           }
 
-          if (sub) {
-            await dbAdapter.setDocument('subjects', sub.id, { kode_mapel, nama_mapel, status });
-          } else {
-            await dbAdapter.addDocument('subjects', { kode_mapel, nama_mapel, status });
+          const stopLoading = startButtonLoading(e.submitter || e.currentTarget.querySelector('button[type="submit"]'));
+          try {
+            if (sub) {
+              await dbAdapter.setDocument('subjects', sub.id, { kode_mapel, nama_mapel, status });
+            } else {
+              await dbAdapter.addDocument('subjects', { kode_mapel, nama_mapel, status });
+            }
+            await recordAuditLog({ aksi: sub ? 'UPDATE_SUBJECT' : 'CREATE_SUBJECT', entitas: 'subjects', target_id: kode_mapel, detail_perubahan: `${kode_mapel} - ${nama_mapel}` });
+            closeModal();
+            showToast('Data mata pelajaran tersimpan.', 'success');
+            renderAdminTabContent();
+          } finally {
+            stopLoading();
           }
-          await recordAuditLog({ aksi: sub ? 'UPDATE_SUBJECT' : 'CREATE_SUBJECT', entitas: 'subjects', target_id: kode_mapel, detail_perubahan: `${kode_mapel} - ${nama_mapel}` });
-          closeModal();
-          showToast('Data mata pelajaran tersimpan.', 'success');
-          renderAdminTabContent();
         };
       };
 
@@ -6417,14 +6455,19 @@
           const tingkat_kelas = document.getElementById('cls-tingkat').value.trim();
           const status = document.getElementById('cls-status').value;
 
-          if (cls) {
-            await dbAdapter.setDocument('classes', cls.id, { nama_kelas, tingkat_kelas, status });
-          } else {
-            await dbAdapter.addDocument('classes', { nama_kelas, tingkat_kelas, status });
+          const stopLoading = startButtonLoading(e.submitter || e.currentTarget.querySelector('button[type="submit"]'));
+          try {
+            if (cls) {
+              await dbAdapter.setDocument('classes', cls.id, { nama_kelas, tingkat_kelas, status });
+            } else {
+              await dbAdapter.addDocument('classes', { nama_kelas, tingkat_kelas, status });
+            }
+            closeModal();
+            showToast('Data kelas tersimpan.', 'success');
+            renderAdminTabContent();
+          } finally {
+            stopLoading();
           }
-          closeModal();
-          showToast('Data kelas tersimpan.', 'success');
-          renderAdminTabContent();
         };
       };
 
@@ -6672,22 +6715,27 @@
             showToast('Format harus YYYY/YYYY (contoh: 2026/2027).', 'error');
             return;
           }
-          if (is_active) {
-            for (const item of state.schoolYears) {
-              if (item.is_active && (!sy || item.id !== sy.id)) {
-                await dbAdapter.setDocument('school_years', item.id, { ...item, is_active: false });
+          const stopLoading = startButtonLoading(e.submitter || e.currentTarget.querySelector('button[type="submit"]'));
+          try {
+            if (is_active) {
+              for (const item of state.schoolYears) {
+                if (item.is_active && (!sy || item.id !== sy.id)) {
+                  await dbAdapter.setDocument('school_years', item.id, { ...item, is_active: false });
+                }
               }
             }
+            if (sy) {
+              await dbAdapter.setDocument('school_years', sy.id, { ...sy, tahun_ajaran, is_active });
+              showToast('Tahun ajaran berhasil diperbarui.', 'success');
+            } else {
+              await dbAdapter.addDocument('school_years', { tahun_ajaran, is_active });
+              showToast('Tahun ajaran ditambahkan.', 'success');
+            }
+            closeModal();
+            renderAdminTabContent();
+          } finally {
+            stopLoading();
           }
-          if (sy) {
-            await dbAdapter.setDocument('school_years', sy.id, { ...sy, tahun_ajaran, is_active });
-            showToast('Tahun ajaran berhasil diperbarui.', 'success');
-          } else {
-            await dbAdapter.addDocument('school_years', { tahun_ajaran, is_active });
-            showToast('Tahun ajaran ditambahkan.', 'success');
-          }
-          closeModal();
-          renderAdminTabContent();
         };
       };
 
@@ -7289,20 +7337,25 @@
           return;
         }
 
-        if (sch) {
-          await dbAdapter.setDocument('teaching_schedules', sch.id, payload);
-        } else {
-          await dbAdapter.addDocument('teaching_schedules', payload);
+        const stopLoading = startButtonLoading(e.submitter || e.currentTarget.querySelector('button[type="submit"]'));
+        try {
+          if (sch) {
+            await dbAdapter.setDocument('teaching_schedules', sch.id, payload);
+          } else {
+            await dbAdapter.addDocument('teaching_schedules', payload);
+          }
+          await recordAuditLog({
+            aksi: sch ? 'UPDATE_SCHEDULE' : 'CREATE_SCHEDULE',
+            entitas: 'teaching_schedules',
+            target_id: sch?.id || 'NEW',
+            detail_perubahan: `Jadwal KBM ${payload.hari} (Jam ${formatJamKeDisplay(payload.jam_ke, payload.jam_ke_selesai)}, ${payload.jam_mulai}-${payload.jam_selesai})`
+          });
+          closeModal();
+          showToast('Jadwal KBM berhasil disimpan.', 'success');
+          renderAdminTabContent();
+        } finally {
+          stopLoading();
         }
-        await recordAuditLog({
-          aksi: sch ? 'UPDATE_SCHEDULE' : 'CREATE_SCHEDULE',
-          entitas: 'teaching_schedules',
-          target_id: sch?.id || 'NEW',
-          detail_perubahan: `Jadwal KBM ${payload.hari} (Jam ${formatJamKeDisplay(payload.jam_ke, payload.jam_ke_selesai)}, ${payload.jam_mulai}-${payload.jam_selesai})`
-        });
-        closeModal();
-        showToast('Jadwal KBM berhasil disimpan.', 'success');
-        renderAdminTabContent();
       };
     }
 
@@ -7630,25 +7683,30 @@
               }
             }
 
-            const updatedCfg = {
-              ...cfg,
-              lesson_slots_by_day: daySlotsMap,
-              lesson_slots: daySlotsMap['Senin'] || cfg.lesson_slots
-            };
+            const stopLoading = startButtonLoading(btnSave, 'Menyimpan...');
+            try {
+              const updatedCfg = {
+                ...cfg,
+                lesson_slots_by_day: daySlotsMap,
+                lesson_slots: daySlotsMap['Senin'] || cfg.lesson_slots
+              };
 
-            await dbAdapter.setDocument('attendance_settings', 'global_config', updatedCfg);
-            state.settings = updatedCfg;
+              await dbAdapter.setDocument('attendance_settings', 'global_config', updatedCfg);
+              state.settings = updatedCfg;
 
-            await recordAuditLog({
-              aksi: 'UPDATE_LESSON_SLOTS',
-              entitas: 'attendance_settings',
-              target_id: 'global_config',
-              detail_perubahan: 'Memperbarui template jam pelajaran mingguan (Senin-Sabtu)'
-            });
+              await recordAuditLog({
+                aksi: 'UPDATE_LESSON_SLOTS',
+                entitas: 'attendance_settings',
+                target_id: 'global_config',
+                detail_perubahan: 'Memperbarui template jam pelajaran mingguan (Senin-Sabtu)'
+              });
 
-            closeModal();
-            showToast('Pengaturan jam pelajaran mingguan berhasil disimpan.', 'success');
-            renderAdminTabContent();
+              closeModal();
+              showToast('Pengaturan jam pelajaran mingguan berhasil disimpan.', 'success');
+              renderAdminTabContent();
+            } finally {
+              stopLoading();
+            }
           };
         }
       }
@@ -7915,25 +7973,30 @@
             const btn = document.getElementById('btn-confirm-sch-import');
             if (btn) {
               btn.onclick = async () => {
-                for (const item of parsedSchedules.filter(x => x.valid)) {
-                  await dbAdapter.addDocument('teaching_schedules', {
-                    teacher_id: item.tch.id,
-                    kategori: 'KBM_REGULER',
-                    nama_tugas: item.nama_tugas || '',
-                    lokasi: item.lokasi || '',
-                    subject_id: item.sub?.id || '',
-                    class_id: item.cls?.id || '',
-                    school_year_id: activeYear?.id || '',
-                    hari: item.hari,
-                    jam_ke: item.jamKe,
-                    jam_ke_selesai: item.jamKeSelesai,
-                    jam_mulai: item.jamMulai,
-                    jam_selesai: item.jamSelesai
-                  });
+                const stopLoading = startButtonLoading(btn, 'Mengimpor...');
+                try {
+                  for (const item of parsedSchedules.filter(x => x.valid)) {
+                    await dbAdapter.addDocument('teaching_schedules', {
+                      teacher_id: item.tch.id,
+                      kategori: 'KBM_REGULER',
+                      nama_tugas: item.nama_tugas || '',
+                      lokasi: item.lokasi || '',
+                      subject_id: item.sub?.id || '',
+                      class_id: item.cls?.id || '',
+                      school_year_id: activeYear?.id || '',
+                      hari: item.hari,
+                      jam_ke: item.jamKe,
+                      jam_ke_selesai: item.jamKeSelesai,
+                      jam_mulai: item.jamMulai,
+                      jam_selesai: item.jamSelesai
+                    });
+                  }
+                  closeModal();
+                  showToast(`${validCount} jadwal KBM berhasil diimpor.`, 'success');
+                  renderAdminTabContent();
+                } finally {
+                  stopLoading();
                 }
-                closeModal();
-                showToast(`${validCount} jadwal KBM berhasil diimpor.`, 'success');
-                renderAdminTabContent();
               };
             }
           } catch (err) {
@@ -8864,55 +8927,60 @@
           return;
         }
 
-        const dObj = new Date(`${dt}T08:00:00+07:00`);
-        const wibDayIdx = new Date(dObj.getTime() + 7 * 3600 * 1000).getUTCDay();
-        const hariName = HARI_LIST[wibDayIdx];
+        const stopLoading = startButtonLoading(e.submitter || e.currentTarget.querySelector('button[type="submit"]'));
+        try {
+          const dObj = new Date(`${dt}T08:00:00+07:00`);
+          const wibDayIdx = new Date(dObj.getTime() + 7 * 3600 * 1000).getUTCDay();
+          const hariName = HARI_LIST[wibDayIdx];
 
-        const targetSched = state.schedules.find(s => s.id === targetSchId) || getFirstScheduleForTeacherOnDay(tid, hariName);
-        const recId = targetSched ? `${tid}_${targetSched.id}_${dt}` : `${tid}_${dt}`;
-        const existing = state.attendanceRecords.find(r => r.id === recId || (r.teacher_id === tid && r.schedule_id === targetSched?.id && r.tanggal === dt));
-        const oldStatus = existing ? existing.status : 'Belum Tercatat';
+          const targetSched = state.schedules.find(s => s.id === targetSchId) || getFirstScheduleForTeacherOnDay(tid, hariName);
+          const recId = targetSched ? `${tid}_${targetSched.id}_${dt}` : `${tid}_${dt}`;
+          const existing = state.attendanceRecords.find(r => r.id === recId || (r.teacher_id === tid && r.schedule_id === targetSched?.id && r.tanggal === dt));
+          const oldStatus = existing ? existing.status : 'Belum Tercatat';
 
-        const sub = targetSched ? state.subjects.find(s => s.id === targetSched.subject_id) : null;
-        const cls = targetSched ? state.classes.find(c => c.id === targetSched.class_id) : null;
-        const kat = targetSched?.kategori || 'KBM_REGULER';
-        const katInfo = getKategoriInfo(kat);
-        const taskName = targetSched?.nama_tugas || (sub ? sub.nama_mapel : katInfo.label);
-        const taskLoc = targetSched?.lokasi || (cls ? cls.nama_kelas : '-');
+          const sub = targetSched ? state.subjects.find(s => s.id === targetSched.subject_id) : null;
+          const cls = targetSched ? state.classes.find(c => c.id === targetSched.class_id) : null;
+          const kat = targetSched?.kategori || 'KBM_REGULER';
+          const katInfo = getKategoriInfo(kat);
+          const taskName = targetSched?.nama_tugas || (sub ? sub.nama_mapel : katInfo.label);
+          const taskLoc = targetSched?.lokasi || (cls ? cls.nama_kelas : '-');
 
-        const payload = {
-          teacher_id: tid,
-          schedule_id: targetSched?.id || '',
-          kategori: kat,
-          nama_tugas: taskName,
-          lokasi: taskLoc,
-          tanggal: dt,
-          hari: hariName,
-          jadwal_jam_mulai: existing?.jadwal_jam_mulai || targetSched?.jam_mulai || '-',
-          jadwal_jam_selesai: existing?.jadwal_jam_selesai || targetSched?.jam_selesai || '-',
-          subject_id: existing?.subject_id || targetSched?.subject_id || '',
-          class_id: existing?.class_id || targetSched?.class_id || '',
-          waktu_absensi: existing?.waktu_absensi || getJakartaNow().timeFull,
-          status: newStatus,
-          metode: 'ADMIN_ENTRY',
-          device_info: getDeviceSummary(),
-          catatan_koreksi: reason
-        };
+          const payload = {
+            teacher_id: tid,
+            schedule_id: targetSched?.id || '',
+            kategori: kat,
+            nama_tugas: taskName,
+            lokasi: taskLoc,
+            tanggal: dt,
+            hari: hariName,
+            jadwal_jam_mulai: existing?.jadwal_jam_mulai || targetSched?.jam_mulai || '-',
+            jadwal_jam_selesai: existing?.jadwal_jam_selesai || targetSched?.jam_selesai || '-',
+            subject_id: existing?.subject_id || targetSched?.subject_id || '',
+            class_id: existing?.class_id || targetSched?.class_id || '',
+            waktu_absensi: existing?.waktu_absensi || getJakartaNow().timeFull,
+            status: newStatus,
+            metode: 'ADMIN_ENTRY',
+            device_info: getDeviceSummary(),
+            catatan_koreksi: reason
+          };
 
-        await dbAdapter.setDocument('attendance_records', recId, payload);
+          await dbAdapter.setDocument('attendance_records', recId, payload);
 
-        const tch = state.teachers.find(t => t.id === tid);
-        await recordAuditLog({
-          aksi: 'ATTENDANCE_CORRECTION',
-          entitas: 'attendance_records',
-          target_id: recId,
-          detail_perubahan: `Koreksi status [${katInfo.label} - ${taskName}] ${tch?.nama_lengkap || tid} pada ${dt}: [${oldStatus}] -> [${newStatus}]`,
-          alasan: reason
-        });
+          const tch = state.teachers.find(t => t.id === tid);
+          await recordAuditLog({
+            aksi: 'ATTENDANCE_CORRECTION',
+            entitas: 'attendance_records',
+            target_id: recId,
+            detail_perubahan: `Koreksi status [${katInfo.label} - ${taskName}] ${tch?.nama_lengkap || tid} pada ${dt}: [${oldStatus}] -> [${newStatus}]`,
+            alasan: reason
+          });
 
-        closeModal();
-        showToast('Koreksi absensi berhasil disimpan & dicatat di Audit Log.', 'success');
-        renderAdminTabContent();
+          closeModal();
+          showToast('Koreksi absensi berhasil disimpan & dicatat di Audit Log.', 'success');
+          renderAdminTabContent();
+        } finally {
+          stopLoading();
+        }
       };
     }
 
@@ -9516,9 +9584,7 @@
           return;
         }
 
-        submitButton.disabled = true;
-        submitButton.setAttribute('aria-busy', 'true');
-        submitButton.textContent = 'Menyimpan...';
+        const stopLoading = startButtonLoading(submitButton, 'Menyimpan...');
         try {
           const credential = EmailAuthProvider.credential(user.email, currentPassword);
           await reauthenticateWithCredential(user, credential);
@@ -9527,9 +9593,8 @@
           showToast('Password Admin berhasil diubah.', 'success');
         } catch (error) {
           showToast(getFriendlyPasswordChangeError(error), 'error');
-          submitButton.disabled = false;
-          submitButton.removeAttribute('aria-busy');
-          submitButton.textContent = 'Simpan Password';
+        } finally {
+          stopLoading();
         }
       });
     }
@@ -9579,8 +9644,8 @@
               <div>
                 <label class="block text-xs font-bold text-[#475569] mb-1">Tema Aplikasi</label>
                 <select id="set-app-theme" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25">
-                  <option value="light" ${(cfg.app_theme || getAppTheme()) === 'light' ? 'selected' : ''}>Mode Terang</option>
-                  <option value="dark" ${(cfg.app_theme || getAppTheme()) === 'dark' ? 'selected' : ''}>Mode Gelap</option>
+                  <option value="light" ${(cfg.app_theme || getAppTheme()) === 'light' ? 'selected' : ''}>Terang</option>
+                  <option value="dark" ${(cfg.app_theme || getAppTheme()) === 'dark' ? 'selected' : ''}>Gelap</option>
                   <option value="auto" ${(cfg.app_theme || getAppTheme()) === 'auto' ? 'selected' : ''}>Otomatis</option>
                 </select>
               </div>
@@ -9788,7 +9853,7 @@
                   Reset Data Simulasi Awal
                 </button>
               ` : '<div></div>'}
-              <button type="submit" class="px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-sm">
+              <button type="submit" id="btn-save-settings" class="px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-sm">
                 Simpan Pengaturan
               </button>
             </div>
@@ -9899,41 +9964,46 @@
           return;
         }
 
-        const updated = {
-          ...cfg,
-          nama_instansi: document.getElementById('set-nama-instansi').value.trim(),
-          logo_url: document.getElementById('set-logo-url').value.trim(),
-          app_theme,
-          geofence_enabled,
-          geofence_latitude,
-          geofence_longitude,
-          geofence_radius_meters,
-          jenis_lembaga: document.getElementById('set-jenis-lembaga') ? document.getElementById('set-jenis-lembaga').value : 'madrasah',
-          kop_baris1: document.getElementById('set-kop-baris1') ? document.getElementById('set-kop-baris1').value.trim() : '',
-          kop_baris2: document.getElementById('set-kop-baris2') ? document.getElementById('set-kop-baris2').value.trim() : '',
-          kop_baris3: document.getElementById('set-kop-baris3') ? document.getElementById('set-kop-baris3').value.trim() : '',
-          kop_baris4: document.getElementById('set-kop-baris4') ? document.getElementById('set-kop-baris4').value.trim() : '',
-          nama_kepala_sekolah: document.getElementById('set-nama-kepala') ? document.getElementById('set-nama-kepala').value.trim() : '',
-          nip_kepala_sekolah: document.getElementById('set-nip-kepala') ? document.getElementById('set-nip-kepala').value.trim() : '',
-          mode_toleransi,
-          menit_buka_sebelum_jadwal: Number(document.getElementById('set-buka-menit').value),
-          toleransi_terlambat_menit: Number(document.getElementById('set-toleransi-menit').value),
-          batas_akhir_menit_setelah_jadwal: Number(document.getElementById('set-batas-menit').value),
-          kebijakan_lewat_batas: document.getElementById('set-kebijakan').value,
-          jeda_reset_publik_detik: Number(document.getElementById('set-reset-detik').value),
-          hari_kerja
-        };
-        await dbAdapter.setDocument('attendance_settings', 'global_config', updated);
-        state.settings = updated;
-        await recordAuditLog({
-          aksi: 'UPDATE_SETTINGS',
-          entitas: 'attendance_settings',
-          target_id: 'global_config',
-          detail_perubahan: `Memperbarui nama instansi (${updated.nama_instansi}) dan pengaturan aplikasi`
-        });
-        showToast('Pengaturan aplikasi berhasil disimpan.', 'success');
-        renderAdminLayout();
-        renderAdminTabContent();
+        const stopLoading = startButtonLoading(document.getElementById('btn-save-settings'), 'Menyimpan...');
+        try {
+          const updated = {
+            ...cfg,
+            nama_instansi: document.getElementById('set-nama-instansi').value.trim(),
+            logo_url: document.getElementById('set-logo-url').value.trim(),
+            app_theme,
+            geofence_enabled,
+            geofence_latitude,
+            geofence_longitude,
+            geofence_radius_meters,
+            jenis_lembaga: document.getElementById('set-jenis-lembaga') ? document.getElementById('set-jenis-lembaga').value : 'madrasah',
+            kop_baris1: document.getElementById('set-kop-baris1') ? document.getElementById('set-kop-baris1').value.trim() : '',
+            kop_baris2: document.getElementById('set-kop-baris2') ? document.getElementById('set-kop-baris2').value.trim() : '',
+            kop_baris3: document.getElementById('set-kop-baris3') ? document.getElementById('set-kop-baris3').value.trim() : '',
+            kop_baris4: document.getElementById('set-kop-baris4') ? document.getElementById('set-kop-baris4').value.trim() : '',
+            nama_kepala_sekolah: document.getElementById('set-nama-kepala') ? document.getElementById('set-nama-kepala').value.trim() : '',
+            nip_kepala_sekolah: document.getElementById('set-nip-kepala') ? document.getElementById('set-nip-kepala').value.trim() : '',
+            mode_toleransi,
+            menit_buka_sebelum_jadwal: Number(document.getElementById('set-buka-menit').value),
+            toleransi_terlambat_menit: Number(document.getElementById('set-toleransi-menit').value),
+            batas_akhir_menit_setelah_jadwal: Number(document.getElementById('set-batas-menit').value),
+            kebijakan_lewat_batas: document.getElementById('set-kebijakan').value,
+            jeda_reset_publik_detik: Number(document.getElementById('set-reset-detik').value),
+            hari_kerja
+          };
+          await dbAdapter.setDocument('attendance_settings', 'global_config', updated);
+          state.settings = updated;
+          await recordAuditLog({
+            aksi: 'UPDATE_SETTINGS',
+            entitas: 'attendance_settings',
+            target_id: 'global_config',
+            detail_perubahan: `Memperbarui nama instansi (${updated.nama_instansi}) dan pengaturan aplikasi`
+          });
+          showToast('Pengaturan aplikasi berhasil disimpan.', 'success');
+          renderAdminLayout();
+          renderAdminTabContent();
+        } finally {
+          stopLoading();
+        }
       };
 
       if (IS_PREVIEW) {
