@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hadirguru-v25';
+const CACHE_NAME = 'hadirguru-v26';
 const APP_SHELL = [
   './',
   './index.html',
@@ -47,4 +47,5 @@ self.addEventListener('fetch', (event) => {
       }))
   );
 });
+
 
