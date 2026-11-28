@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-labelledby="title desc">
+  <title id="title">HadirGuru</title>
+  <desc id="desc">QR Code dengan tanda centang untuk absensi guru</desc>
+  <rect width="192" height="192" rx="44" fill="#2563EB"/>
+
+  <!-- QR Code minimal dengan tiga finder pattern -->
+  <g fill="#FFFFFF">
+    <rect x="28" y="28" width="34" height="34" rx="4"/>
+    <rect x="36" y="36" width="18" height="18" rx="2" fill="#2563EB"/>
+    <rect x="42" y="42" width="6" height="6" rx="1"/>
+
+    <rect x="130" y="28" width="34" height="34" rx="4"/>
+    <rect x="138" y="36" width="18" height="18" rx="2" fill="#2563EB"/>
+    <rect x="144" y="42" width="6" height="6" rx="1"/>
+
+    <rect x="28" y="130" width="34" height="34" rx="4"/>
+    <rect x="36" y="138" width="18" height="18" rx="2" fill="#2563EB"/>
+    <rect x="42" y="144" width="6" height="6" rx="1"/>
+
+    <!-- Modul tambahan agar pola QR tetap terlihat tanpa menjadi ramai -->
+    <rect x="72" y="30" width="10" height="10" rx="1"/>
+    <rect x="88" y="30" width="10" height="10" rx="1"/>
+    <rect x="104" y="30" width="10" height="10" rx="1"/>
+    <rect x="72" y="46" width="10" height="10" rx="1"/>
+    <rect x="104" y="46" width="10" height="10" rx="1"/>
+
+    <rect x="130" y="72" width="10" height="10" rx="1"/>
+    <rect x="146" y="72" width="10" height="10" rx="1"/>
+    <rect x="130" y="88" width="10" height="10" rx="1"/>
+    <rect x="146" y="104" width="10" height="10" rx="1"/>
+
+    <rect x="72" y="146" width="10" height="10" rx="1"/>
+    <rect x="88" y="146" width="10" height="10" rx="1"/>
+    <rect x="104" y="146" width="10" height="10" rx="1"/>
+    <rect x="120" y="130" width="10" height="10" rx="1"/>
+    <rect x="136" y="130" width="10" height="10" rx="1"/>
+    <rect x="152" y="130" width="10" height="10" rx="1"/>
+  </g>
+
+  <!-- Badge verifikasi di tengah QR -->
+  <circle cx="96" cy="96" r="28" fill="#FFFFFF"/>
+  <path d="M80 96l10 10 22-23" fill="none" stroke="#10B981" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
