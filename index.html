@@ -1153,7 +1153,7 @@
       else if (/Firefox/i.test(ua)) browser = 'Firefox';
       else if (/Edg/i.test(ua)) browser = 'Edge';
 
-      return `${os} â€¢ ${browser}`;
+      return `${os} • ${browser}`;
     }
 
     function escapeHtml(str) {
@@ -1411,7 +1411,7 @@
                   waktu_absensi: '07:22:14',
                   status: 'Hadir',
                   metode: 'QR_CODE',
-                  device_info: 'Android â€¢ Chrome',
+                  device_info: 'Android • Chrome',
                   catatan_koreksi: ''
                 },
                 {
@@ -1430,7 +1430,7 @@
                   waktu_absensi: '07:25:02',
                   status: 'Hadir',
                   metode: 'QR_CODE',
-                  device_info: 'iOS â€¢ Safari',
+                  device_info: 'iOS • Safari',
                   catatan_koreksi: ''
                 }
               ];
@@ -1661,7 +1661,7 @@
     function formatJamKeDisplay(jamKe, jamKeSelesai) {
       if (!jamKe) return '-';
       if (!jamKeSelesai || Number(jamKeSelesai) === Number(jamKe)) return `Jam ke-${jamKe}`;
-      return `Jam ke-${jamKe}â€“${jamKeSelesai}`;
+      return `Jam ke-${jamKe}–${jamKeSelesai}`;
     }
 
     function getDefaultSettings() {
@@ -1865,7 +1865,7 @@
           waktu_absensi: '07:22:14',
           status: 'Hadir',
           metode: 'QR_CODE',
-          device_info: 'Android â€¢ Chrome',
+          device_info: 'Android • Chrome',
           catatan_koreksi: ''
         },
         {
@@ -1884,7 +1884,7 @@
           waktu_absensi: '07:25:02',
           status: 'Hadir',
           metode: 'QR_CODE',
-          device_info: 'iOS â€¢ Safari',
+          device_info: 'iOS • Safari',
           catatan_koreksi: ''
         }
       ];
@@ -2127,7 +2127,7 @@
 
       // Akurasi yang terlalu rendah membuat hasil geofence tidak dapat dipercaya.
       if (accuracy > 150) {
-        throw new Error(`Akurasi GPS terlalu rendah (Â±${Math.round(accuracy)} m). Aktifkan GPS akurasi tinggi lalu coba lagi.`);
+        throw new Error(`Akurasi GPS terlalu rendah (±${Math.round(accuracy)} m). Aktifkan GPS akurasi tinggi lalu coba lagi.`);
       }
 
       const distance = calculateDistanceMeters(
@@ -2138,7 +2138,7 @@
       );
 
       if (distance > settings.radius) {
-        throw new Error(`Anda berada di luar area absensi kantor sekolah (jarak terdeteksi Â±${Math.round(distance)} m).`);
+        throw new Error(`Anda berada di luar area absensi kantor sekolah (jarak terdeteksi ±${Math.round(distance)} m).`);
       }
 
       return {
@@ -2965,7 +2965,7 @@
     }
 
     // =========================================================================
-    // 8. HALAMAN ABSENSI PUBLIK (GURU â€” TANPA LOGIN)
+    // 8. HALAMAN ABSENSI PUBLIK (GURU — TANPA LOGIN)
     // =========================================================================
     async function stopQrScannerIfRunning() {
       if (state.html5QrInstance) {
@@ -3360,7 +3360,7 @@
                       </div>
                       <div class="text-right shrink-0">
                         <span class="text-[11px] font-bold text-[#2563EB]">Jam ${formatJamKeDisplay(sch.jam_ke, sch.jam_ke_selesai)}</span>
-                        <div class="text-[11px] text-[#475569] tabular-nums">${sch.jam_mulai}â€“${sch.jam_selesai} WIB</div>
+                        <div class="text-[11px] text-[#475569] tabular-nums">${sch.jam_mulai}–${sch.jam_selesai} WIB</div>
                       </div>
                     </div>
                   `;
@@ -3548,7 +3548,7 @@
               <div>
                 <label class="block text-xs font-bold text-[#475569] mb-1.5">Kata Sandi</label>
                 <div class="relative">
-                  <input id="login-password" type="password" required placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢" class="w-full pl-4 pr-12 py-3 rounded-2xl bg-[#F8FAFC] border border-transparent focus:border-[#2563EB] focus:bg-white text-sm font-medium focus:outline-none transition" />
+                  <input id="login-password" type="password" required placeholder="••••••••" class="w-full pl-4 pr-12 py-3 rounded-2xl bg-[#F8FAFC] border border-transparent focus:border-[#2563EB] focus:bg-white text-sm font-medium focus:outline-none transition" />
                   <button type="button" id="btn-toggle-password" aria-label="Tampilkan kata sandi" title="Tampilkan kata sandi" class="absolute inset-y-0 right-0 w-12 flex items-center justify-center text-[#94A3B8] hover:text-[#2563EB] focus:outline-none focus:text-[#2563EB] transition">
                     <i data-lucide="eye" class="w-5 h-5 pointer-events-none"></i>
                   </button>
@@ -4111,7 +4111,7 @@
 
               <div class="flex flex-nowrap items-center gap-1.5 sm:gap-3 shrink-0">
                 <div id="admin-live-clock" class="hidden sm:block text-xs font-medium text-[#64748B] tabular-nums">
-                  ${jakarta.formattedDate} â€¢ ${jakarta.timeFull} WIB
+                  ${jakarta.formattedDate} • ${jakarta.timeFull} WIB
                 </div>
 
                 <button id="btn-theme-admin" type="button" class="btn-theme-toggle p-2 rounded-xl bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#475569] transition flex items-center justify-center cursor-pointer active:scale-95 shrink-0" title="Ganti Tema">
@@ -4344,7 +4344,7 @@
             katInfo: kInfo,
             judulTugas: title,
             lokasi: loc,
-            jamJadwal: `${sched.jam_mulai}â€“${sched.jam_selesai}`,
+            jamJadwal: `${sched.jam_mulai}–${sched.jam_selesai}`,
             waktuAbsen: rec.waktu_absensi,
             status: rec.status,
             metode: rec.metode,
@@ -4363,7 +4363,7 @@
             katInfo: kInfo,
             judulTugas: title,
             lokasi: loc,
-            jamJadwal: `${sched.jam_mulai}â€“${sched.jam_selesai}`,
+            jamJadwal: `${sched.jam_mulai}–${sched.jam_selesai}`,
             waktuAbsen: '-',
             status: missingStatus,
             metode: '-',
@@ -4426,7 +4426,7 @@
 
         const earliestStart = tScheds[0]?.jam_mulai || '';
         const latestEnd = tScheds[tScheds.length - 1]?.jam_selesai || '';
-        const timeRange = earliestStart && latestEnd ? `${earliestStart}â€“${latestEnd}` : '-';
+        const timeRange = earliestStart && latestEnd ? `${earliestStart}–${latestEnd}` : '-';
 
         teacherSummaries.push({
           teacher: t,
@@ -5451,7 +5451,7 @@
 
       printArea.innerHTML = `
         <div style="font-family: 'Plus Jakarta Sans', sans-serif;">
-          <h2 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Kartu QR Code Absensi Guru â€” ${escapeHtml(cfg.nama_instansi)}</h2>
+          <h2 style="font-size: 16px; font-weight: 800; margin-bottom: 12px;">Kartu QR Code Absensi Guru — ${escapeHtml(cfg.nama_instansi)}</h2>
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
             ${teacherList.map(t => {
               const tok = state.qrTokens.find(q => q.teacher_id === t.id && q.is_active) || state.qrTokens.find(q => q.teacher_id === t.id);
@@ -5812,7 +5812,7 @@
           guideRows,
           [
             {
-              title: `REFERENSI KODE GURU YANG SUDAH TERDAFTAR (${existingTeacherRows.length} Guru â€” Hindari Duplikasi Kode)`,
+              title: `REFERENSI KODE GURU YANG SUDAH TERDAFTAR (${existingTeacherRows.length} Guru — Hindari Duplikasi Kode)`,
               headers: ['No.', 'Kode Guru Terpakai', 'Nama Lengkap Guru', 'Status'],
               rows: existingTeacherRows
             }
@@ -6731,12 +6731,12 @@
         if (s.teacher_id === teacher_id) {
           const sKat = getKategoriInfo(s.kategori || 'KBM_REGULER');
           const title = s.nama_tugas || (state.subjects.find(sub => sub.id === s.subject_id)?.nama_mapel) || sKat.label;
-          return `Bentrok Jadwal Guru! Guru ini sudah memiliki tugas [${sKat.label}] "${title}" pada pukul ${s.jam_mulai}â€“${s.jam_selesai}.`;
+          return `Bentrok Jadwal Guru! Guru ini sudah memiliki tugas [${sKat.label}] "${title}" pada pukul ${s.jam_mulai}–${s.jam_selesai}.`;
         }
         if (class_id && s.class_id && s.class_id === class_id) {
           const tch = state.teachers.find(t => t.id === s.teacher_id);
           const cls = state.classes.find(c => c.id === s.class_id);
-          return `Bentrok Jadwal Kelas! Kelas ${cls?.nama_kelas || '-'} sudah diisi oleh ${tch?.nama_lengkap || '-'} pada pukul ${s.jam_mulai}â€“${s.jam_selesai}.`;
+          return `Bentrok Jadwal Kelas! Kelas ${cls?.nama_kelas || '-'} sudah diisi oleh ${tch?.nama_lengkap || '-'} pada pukul ${s.jam_mulai}–${s.jam_selesai}.`;
         }
       }
       return null;
@@ -6814,7 +6814,7 @@
                   <td class="py-3 px-3 sm:px-4 text-center text-[#475569] font-medium">${rowNo}</td>
                   <td class="py-3 px-3 sm:px-4">
                     <p class="font-bold text-[#2563EB]">${formatJamKeDisplay(s.jam_ke, s.jam_ke_selesai)}</p>
-                    <p class="text-[11px] font-semibold text-[#0F172A] tabular-nums whitespace-nowrap">${s.jam_mulai} â€“ ${s.jam_selesai} WIB</p>
+                    <p class="text-[11px] font-semibold text-[#0F172A] tabular-nums whitespace-nowrap">${s.jam_mulai} – ${s.jam_selesai} WIB</p>
                   </td>
                   <td class="py-3 px-3 sm:px-4 font-semibold text-[#0F172A]">
                     ${escapeHtml(tch?.nama_lengkap || '-')}
@@ -6885,7 +6885,7 @@
               const s = state.schedules.find(x => x.id === b.dataset.delSch);
               confirmDialog({
                 title: 'Hapus Jadwal Mengajar',
-                message: `Hapus jadwal hari ${s.hari} pukul ${s.jam_mulai}â€“${s.jam_selesai}?`,
+                message: `Hapus jadwal hari ${s.hari} pukul ${s.jam_mulai}–${s.jam_selesai}?`,
                 onConfirm: async () => {
                   await dbAdapter.deleteDocument('teaching_schedules', s.id);
                   showToast('Jadwal berhasil dihapus.', 'success');
@@ -6943,7 +6943,7 @@
                   </select>
                 </div>
               ` : `
-                <span class="text-xs font-semibold text-[#64748B] bg-[#F8FAFC] px-3 py-1.5 rounded-lg border border-[#E2E8F0]">Semua Hari (Senin â€“ Sabtu)</span>
+                <span class="text-xs font-semibold text-[#64748B] bg-[#F8FAFC] px-3 py-1.5 rounded-lg border border-[#E2E8F0]">Semua Hari (Senin – Sabtu)</span>
               `}
             </div>
 
@@ -7031,7 +7031,7 @@
                             return `
                               <div class="bg-white p-3 rounded-xl shadow-xs border border-[#E2E8F0] space-y-1">
                                 <div class="flex justify-between items-center text-[10px]">
-                                  <span class="font-bold text-[#2563EB] tabular-nums">${formatJamKeDisplay(s.jam_ke, s.jam_ke_selesai)} (${s.jam_mulai}â€“${s.jam_selesai})</span>
+                                  <span class="font-bold text-[#2563EB] tabular-nums">${formatJamKeDisplay(s.jam_ke, s.jam_ke_selesai)} (${s.jam_mulai}–${s.jam_selesai})</span>
                                 </div>
                                 <p class="text-xs font-bold text-[#0F172A] truncate">${escapeHtml(mapelNama)}</p>
                                 <div class="flex items-center justify-between text-[11px] text-[#475569]">
@@ -7897,7 +7897,7 @@
                         <td class="p-2.5 font-bold">${escapeHtml(p.tch?.nama_lengkap || '-')}</td>
                         <td class="p-2.5">${escapeHtml(p.sub?.nama_mapel || '-')}</td>
                         <td class="p-2.5">${escapeHtml(p.cls?.nama_kelas || '-')}</td>
-                        <td class="p-2.5">${p.hari} (Jam ${formatJamKeDisplay(p.jamKe, p.jamKeSelesai)}, ${p.jamMulai}â€“${p.jamSelesai})</td>
+                        <td class="p-2.5">${p.hari} (Jam ${formatJamKeDisplay(p.jamKe, p.jamKeSelesai)}, ${p.jamMulai}–${p.jamSelesai})</td>
                         <td class="p-2.5">${p.valid ? '<span class="text-emerald-600 font-bold">Valid</span>' : `<span class="text-rose-600 font-bold">${escapeHtml(p.error)}</span>`}</td>
                       </tr>
                     `).join('')}
@@ -8241,7 +8241,7 @@
           lokasi,
           tanggal: rec.tanggal,
           hari: rec.hari,
-          jamJadwal: (rec.jadwal_jam_mulai && rec.jadwal_jam_selesai) ? `${rec.jadwal_jam_mulai}â€“${rec.jadwal_jam_selesai}` : (rec.jadwal_jam_mulai || '-'),
+          jamJadwal: (rec.jadwal_jam_mulai && rec.jadwal_jam_selesai) ? `${rec.jadwal_jam_mulai}–${rec.jadwal_jam_selesai}` : (rec.jadwal_jam_mulai || '-'),
           waktuAbsen: rec.waktu_absensi,
           status: rec.status,
           metode: rec.metode,
@@ -8840,7 +8840,7 @@
             const title = sub ? sub.nama_mapel : (d.nama_tugas || 'KBM');
             const loc = cls ? cls.nama_kelas : (d.lokasi || '-');
             const isSel = selectedSchId ? d.id === selectedSchId : false;
-            return `<option value="${d.id}" ${isSel ? 'selected' : ''}>${title} (${d.jam_mulai}â€“${d.jam_selesai} â€¢ ${loc})</option>`;
+            return `<option value="${d.id}" ${isSel ? 'selected' : ''}>${title} (${d.jam_mulai}–${d.jam_selesai} • ${loc})</option>`;
           }).join('');
         }
         initCustomSelects(selDuty.closest('.custom-select-wrapper')?.parentNode || selDuty.parentNode);
@@ -9345,8 +9345,8 @@
         <div class="p-6">
           <div class="flex items-center justify-between mb-4 pb-3 border-b border-[#E2E8F0]">
             <div>
-              <h3 class="text-base font-bold text-[#0F172A]">Rincian Mengajar â€” ${escapeHtml(teacher.nama_lengkap)}</h3>
-              <p class="text-xs text-[#94A3B8] mt-0.5">Bulan ${monthName} ${y} â€¢ ${records.length} riwayat kehadiran tercatat</p>
+              <h3 class="text-base font-bold text-[#0F172A]">Rincian Mengajar — ${escapeHtml(teacher.nama_lengkap)}</h3>
+              <p class="text-xs text-[#94A3B8] mt-0.5">Bulan ${monthName} ${y} • ${records.length} riwayat kehadiran tercatat</p>
             </div>
             <button type="button" onclick="closeModal()" class="p-2 rounded-xl bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#64748B] hover:text-[#0F172A] transition" aria-label="Tutup"><i data-lucide="x" class="w-4 h-4"></i></button>
           </div>
@@ -9630,7 +9630,7 @@
                 <div class="flex-1">
                   <label class="block text-xs font-bold text-[#475569] mb-1">Radius Absensi (Meter)</label>
                   <input id="set-geofence-radius" type="number" min="10" max="500" step="1" value="${escapeHtml(cfg.geofence_radius_meters ?? 100)}" class="w-full px-3.5 py-2.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] text-xs font-bold tabular-nums focus:outline-none focus:ring-2 focus:ring-[#2563EB]/25" />
-                  <p class="text-[10px] text-[#94A3B8] mt-1">Disarankan mulai dari 50â€“100 meter, lalu uji di dalam kantor.</p>
+                  <p class="text-[10px] text-[#94A3B8] mt-1">Disarankan mulai dari 50–100 meter, lalu uji di dalam kantor.</p>
                 </div>
                 <button type="button" id="btn-use-current-geofence-location" class="sm:mt-5 px-4 py-2.5 rounded-xl bg-[#E0F2FE] hover:bg-[#0284C7] hover:text-white text-[#0369A1] text-xs font-bold transition whitespace-nowrap">
                   Gunakan Lokasi Saat Ini
@@ -9863,7 +9863,7 @@
             geofenceLongitudeInput.value = Number(position.coords.longitude).toFixed(6);
             if (geofenceStatus) {
               geofenceStatus.className = 'text-[11px] font-semibold rounded-xl px-3 py-2 bg-emerald-50 text-emerald-700';
-              geofenceStatus.textContent = `Koordinat berhasil diambil (akurasi Â±${Math.round(position.coords.accuracy)} m). Periksa kembali sebelum menyimpan.`;
+              geofenceStatus.textContent = `Koordinat berhasil diambil (akurasi ±${Math.round(position.coords.accuracy)} m). Periksa kembali sebelum menyimpan.`;
             }
           } catch (err) {
             if (geofenceStatus) {
@@ -10060,7 +10060,7 @@
       if (pubClock) pubClock.textContent = jakarta.timeFull;
 
       const admClock = document.getElementById('admin-live-clock');
-      if (admClock) admClock.textContent = `${jakarta.formattedDate} â€¢ ${jakarta.timeFull} WIB`;
+      if (admClock) admClock.textContent = `${jakarta.formattedDate} • ${jakarta.timeFull} WIB`;
     }, 1000);
 
     // Global Smooth Micro-Tooltip Manager (Ultra-smooth CSS transitions, zero clipping)
@@ -10227,7 +10227,3 @@
   </script>
 </body>
 </html>
-
-
-
-
