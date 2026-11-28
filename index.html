@@ -939,6 +939,7 @@
       addDoc,
       updateDoc,
       deleteDoc,
+      writeBatch,
       runTransaction,
       query,
       where,
@@ -1968,6 +1969,43 @@
         device_info: getDeviceSummary()
       };
       await dbAdapter.addDocument('audit_logs', logEntry);
+    }
+
+    function getAuditLogCutoffDate() {
+      const cutoff = new Date();
+      cutoff.setFullYear(cutoff.getFullYear() - 1);
+      return cutoff;
+    }
+
+    async function deleteOldAuditLogs() {
+      const cutoffDate = getAuditLogCutoffDate();
+      const cutoffIso = cutoffDate.toISOString();
+
+      if (IS_PREVIEW) {
+        const oldLogs = (state.auditLogs || []).filter(log => {
+          const parsed = new Date(log.timestamp || '');
+          return Number.isFinite(parsed.getTime()) && parsed < cutoffDate;
+        });
+        const oldIds = new Set(oldLogs.map(log => log.id));
+        state.auditLogs = (state.auditLogs || []).filter(log => !oldIds.has(log.id));
+        await dbAdapter.syncPreview();
+        return oldLogs.length;
+      }
+
+      const oldLogsSnap = await getDocs(query(
+        collection(fbDb, 'audit_logs'),
+        where('timestamp', '<', cutoffIso)
+      ));
+
+      const oldLogDocs = oldLogsSnap.docs;
+      for (let i = 0; i < oldLogDocs.length; i += 450) {
+        const batch = writeBatch(fbDb);
+        oldLogDocs.slice(i, i + 450).forEach(logDoc => batch.delete(logDoc.ref));
+        await batch.commit();
+      }
+
+      await dbAdapter.getAll({ includeAdminData: true });
+      return oldLogDocs.length;
     }
 
     // =========================================================================
@@ -9921,8 +9959,12 @@
     function renderAuditModule(container) {
       container.innerHTML = `
         <div class="space-y-4 animate-fade-up">
-          <div>
+          <div class="flex items-center justify-between gap-3">
             <h2 class="text-2xl font-bold text-[#0F172A] tracking-tight">Audit Log Keamanan</h2>
+            <button id="btn-delete-old-audit-logs" type="button" data-tooltip="Hapus log audit yang lebih lama dari 1 tahun" aria-label="Hapus log audit lama" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm active:scale-95 transition shrink-0">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">Hapus Log Lama</span>
+            </button>
           </div>
 
           <div class="bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-sm border border-[#E2E8F0] space-y-3.5 sm:space-y-4">
@@ -9963,6 +10005,48 @@
           </div>
         </div>
       `;
+
+      document.getElementById('btn-delete-old-audit-logs')?.addEventListener('click', () => {
+        confirmDialog({
+          title: 'Hapus Log Audit Lama',
+          message: 'Semua log audit yang lebih lama dari 1 tahun akan dihapus permanen. Log yang masih dalam 1 tahun tidak akan terpengaruh. Lanjutkan?',
+          confirmText: 'Ya, Hapus Log Lama',
+          danger: true,
+          icon: 'trash-2',
+          onConfirm: async () => {
+            try {
+              const deletedCount = await deleteOldAuditLogs();
+              if (deletedCount === 0) {
+                await dbAdapter.getAll({ includeAdminData: true });
+                showToast('Tidak ada log audit yang lebih lama dari 1 tahun.', 'info');
+                renderAdminTabContent();
+                return;
+              }
+
+              try {
+                await recordAuditLog({
+                  aksi: 'PURGE_OLD_AUDIT_LOGS',
+                  entitas: 'audit_logs',
+                  target_id: 'older_than_1_year',
+                  detail_perubahan: `Menghapus ${deletedCount} log audit yang lebih lama dari 1 tahun`,
+                  alasan: 'Pemeliharaan penyimpanan audit log'
+                });
+              } catch (auditError) {
+                console.error('Audit purge activity could not be recorded:', auditError);
+              }
+
+              await dbAdapter.getAll({ includeAdminData: true });
+              showToast(`${deletedCount} log audit lama berhasil dihapus.`, 'success');
+              renderAdminTabContent();
+            } catch (error) {
+              console.error('Old audit log deletion failed:', error);
+              await dbAdapter.getAll({ includeAdminData: true }).catch(() => {});
+              showToast('Log audit lama gagal dihapus. Periksa koneksi dan aturan Firestore.', 'error');
+              renderAdminTabContent();
+            }
+          }
+        });
+      });
     }
 
     // =========================================================================
